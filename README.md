@@ -31,7 +31,3 @@ Un site internet est également en cours de développement. Cependant, au moment
 [Corentin COTTEREAU](https://github.com/Corentin-cott) : Concepteur de Mineotter
 
 [Mathéo PERODEAU](https://github.com/matheo-1712) : Concepteur de l'API ADLoutres
-
-## License
-
-[...]
