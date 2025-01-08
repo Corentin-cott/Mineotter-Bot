@@ -32,6 +32,10 @@ Bien sûr, vous ne gérez probablement pas vos serveurs de la même manière que
 
 De plus, pour fonctionner de manière plus sécurisée et plus simple, une API est nécessaire pour gérer le lancement des serveurs et d'autres fonctionnalités. L'[API Serveur de Mathéo](https://github.com/matheo-1712/API-Serveur) fonctionne très bien avec Mineotter et c'est celle que je vous conseille !
 
+Pour la base de données, vous pouvez l'installer via les scripts dans le dossier `./scripts/`, ou suivre ce schéma :
+
+![ADLDatabase](https://github.com/user-attachments/assets/5daa6184-cdf0-45e2-8f2b-784104a72318)
+
 ## Il y a t'il une documentation pour l'améliorer ?
 
 Pas encore mais, mais c'est prévu oui.
