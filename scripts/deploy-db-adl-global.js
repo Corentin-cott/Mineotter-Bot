@@ -1,6 +1,6 @@
 const colorConsole = require(__dirname + '/../utils/colorConsole.js');
+const { db_host, db_user, db_password, global_db_name } = require('../config.json');
 const mysql = require('mysql2');
-const { db_host, db_user, db_password, api_db_name } = require('../config.json');
 
 // Création de la connexion à MySQL
 const connection = mysql.createConnection({
@@ -32,16 +32,16 @@ connection.connect((err) => {
   colorConsole.success('Connexion à la base de données établie.');
 
   // Vérification si la base de données existe
-  connection.query(`CREATE DATABASE IF NOT EXISTS ${api_db_name};`, (err, result) => {
+  connection.query(`CREATE DATABASE IF NOT EXISTS ${global_db_name};`, (err, result) => {
     if (err) {
       colorConsole.error(`Erreur lors de la création de la base de données : "${colorConsole.errorImportant(err)}"`);
       connection.end();
       return;
     }
-    colorConsole.success(`Base de données ${colorConsole.important(api_db_name)} créée ou existante.`);
+    colorConsole.success(`Base de données ${colorConsole.important(global_db_name)} créée ou existante.`);
 
     // Sélectionner la base de données et créer les tables
-    connection.changeUser({ database: api_db_name }, async (err) => {
+    connection.changeUser({ database: global_db_name }, async (err) => {
       if (err) {
         colorConsole.error(`Erreur lors du changement de base de données : "${colorConsole.errorImportant(err)}"`);
         connection.end();
@@ -153,16 +153,16 @@ connection.connect((err) => {
               nb_mort INT DEFAULT 0,
               nb_kills INT DEFAULT 0,
               nb_playerkill INT DEFAULT 0,
-              mob_killed JSON DEFAULT '{}',
+              mob_killed JSON,
               nb_blocs_detr INT DEFAULT 0,
               nb_blocs_pose INT DEFAULT 0,
               dist_total INT DEFAULT 0,
               dist_pieds INT DEFAULT 0,
               dist_elytres INT DEFAULT 0,
               dist_vol INT DEFAULT 0,
-              item_crafted JSON DEFAULT '{}',
-              item_broken JSON DEFAULT '{}',
-              achievement JSON DEFAULT '{}',
+              item_crafted JSON,
+              item_broken JSON,
+              achievement JSON,
               dern_enregistrment DATETIME NOT NULL,
               FOREIGN KEY (serveur_id) REFERENCES serveurs(id),
               FOREIGN KEY (joueurs_mc_uuid) REFERENCES joueurs_mc(uuid)
