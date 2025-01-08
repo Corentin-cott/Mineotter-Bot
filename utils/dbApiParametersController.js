@@ -1,13 +1,13 @@
 const colorConsole = require(__dirname + '/colorConsole.js');
+const { db_host, db_user, db_password, api_db_name } = require('../config.json');
 const mysql = require('mysql2');
 const fs = require('fs');
 
-const config = JSON.parse(fs.readFileSync(__dirname + '/../config.json'));
 const connection = mysql.createConnection({
-  host: config.db_host,
-  user: config.db_user,
-  password: config.db_password,
-  database: config.api_db_name
+  host: db_host,
+  user: db_user,
+  password: db_password,
+  database: api_db_name
 });
 
 function connectToDB() {

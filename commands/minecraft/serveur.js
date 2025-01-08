@@ -23,22 +23,29 @@ module.exports = {
         // Pour l'action "check", pas besoin d'envoyer la liste des serveurs
         if (action === 'check') {
             let servPrimaire, servSecondaire;
-            let servPrimaireEmoji, servSecondaireEmoji;
-            let servPrimaireIsOnline, servSecondaireIsOnline;
+
+            let primaryOnlineText, secondaryOnlineText;
             let servPrimairenbJoueurs, servSecondairenbJoueurs;
+
             try {
                 servPrimaire = await dbController.getServerById(await dbController.getServerPrimaire());
                 servSecondaire = await dbController.getServerById(await dbController.getServerSecondaire());
 
                 const servPrimaireStatus = await dbController.getServeurStatus(servPrimaire.id);
-                servPrimaireIsOnline = servPrimaireStatus.online;
+                const servPrimaireIsOnline = servPrimaireStatus.online;
                 servPrimairenbJoueurs = servPrimaireStatus.nb_joueurs;
 
                 const servSecondaireStatus = await dbController.getServeurStatus(servSecondaire.id);
-                servSecondaireIsOnline = servSecondaireStatus.online;
+                const servSecondaireIsOnline = servSecondaireStatus.online;
                 servSecondairenbJoueurs = servSecondaireStatus.nb_joueurs;
+                
+                if (servPrimaireIsOnline) { primaryOnlineText = `🟢 ${servPrimairenbJoueurs} joueur(s) en ligne`; } else { primaryOnlineText = `🔴 Serveur hors ligne` };
+                if (servSecondaireIsOnline) { secondaryOnlineText = `🟢 ${servSecondairenbJoueurs} joueur(s) en ligne`; } else { secondaryOnlineText = `🔴 Serveur hors ligne` };
             } catch (error) {
                 colorConsole.error(`Erreur lors de la récupération des serveurs principaux : "${colorConsole.important(error)}"`);
+
+                primaryOnlineText = '🟡 Status du serveur inconnu';
+                secondaryOnlineText = '🟡 Status du serveur inconnu';
             }
 
             if (!servPrimaire || !servSecondaire) {
@@ -48,9 +55,6 @@ module.exports = {
                 });
             }
 
-            let primaryOnlineText, secondaryOnlineText;
-            if (servPrimaireIsOnline) { primaryOnlineText = `🟢 ${servPrimairenbJoueurs} joueur(s) en ligne`; } else { primaryOnlineText = `🔴 Serveur hors ligne` };
-            if (servSecondaireIsOnline) { secondaryOnlineText = `🟢 ${servSecondairenbJoueurs} joueur(s) en ligne`; } else { secondaryOnlineText = `🔴 Serveur hors ligne` };
 
             function formatEmbedFields (server, onlineText) { // Pour un meilleur rendu sur téléphone, des caractères invisibles ont été ajoutés entre les accolades
                 return `${dbController.getServerEmoji(server)} ${server.nom} (${server.version})\n**Modpack :** [${server.modpack}](${server.modpack_url})\n\n${onlineText}\n`;

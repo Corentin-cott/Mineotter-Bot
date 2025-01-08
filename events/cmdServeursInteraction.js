@@ -61,7 +61,7 @@ module.exports = {
             return interaction.reply({ content: 'Une erreur s\'est produite lors de l\'exécution de l\'action. Veuillez réessayer ou contactez un administrateur.', flags: MessageFlags.Ephemeral });
         }
 
-        if (data.status == true) {
+        if (serverStartResponse.status == true) {
             const embed = new EmbedBuilder()
                 .setTitle(`${interaction.user.username} a lancé le serveur ${serverInfo.nom} !`)
                 .setDescription(`Un message devrait t'avertir lorsque le serveur sera accessible.`)
@@ -74,7 +74,7 @@ module.exports = {
 
             await interaction.reply({ embeds: [embed] });
         } else {
-            await this.apiErrorHandle(interaction, data);                 
+            await this.apiErrorHandle(interaction, serverStartResponse);                 
         }
     },
 

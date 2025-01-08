@@ -1,14 +1,14 @@
 const dbApiParametersController = require(__dirname + '/dbApiParametersController.js');
 const colorConsole = require(__dirname + '/colorConsole.js');
+const { db_host, db_user, db_password, global_db_name, api_token } = require('../config.json');
 const mysql = require('mysql2');
 const fs = require('fs');
 
-const config = JSON.parse(fs.readFileSync(__dirname + '/../config.json'));
 const connection = mysql.createConnection({
-  host: config.db_host,
-  user: config.db_user,
-  password: config.db_password,
-  database: config.global_db_name
+  host: db_host,
+  user: db_user,
+  password: db_password,
+  database: global_db_name
 });
 
 function connectToDB() {
@@ -145,9 +145,9 @@ function isServerGlobal(id) {
 async function startServer(id) {
   const apiRoute = `${await dbApiParametersController.getRouteByAlias('serveursStart')}`;
   try {
-    const response = await fetch(ApiLink, {
+    const response = await fetch(apiRoute, {
         method: 'POST',
-        body: JSON.stringify({ id_serv: serverInfo.id, client_token: api_token }),
+        body: JSON.stringify({ id_serv: id, client_token: api_token }),
         headers: { 'Content-Type': 'application/json' }
     });
     const data = await response.json();
