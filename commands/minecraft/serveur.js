@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
-const colorConsole = require(__dirname + '/../utils/colorConsole.js');
+const colorConsole = require(__dirname + '/../../utils/colorConsole.js');
 const { bot_color } = require(__dirname + '/../../config.json');
 const dbController = require(__dirname + '/../../utils/dbServeurController');
 
