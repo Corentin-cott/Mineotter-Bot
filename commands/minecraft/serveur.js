@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, MessageFlags } = require('discord.js');
+const colorConsole = require(__dirname + '/../utils/colorConsole.js');
 const { bot_color } = require(__dirname + '/../../config.json');
 const dbController = require(__dirname + '/../../utils/dbServeurController');
-const { log_i, log_s, log_e, error_c, reset_c, important_c } = require(__dirname + '/../../color_code.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -38,7 +38,7 @@ module.exports = {
                 servSecondaireIsOnline = servSecondaireStatus.online;
                 servSecondairenbJoueurs = servSecondaireStatus.nb_joueurs;
             } catch (error) {
-                console.log(log_e + 'Erreur lors de la récupération des serveurs principaux : ' + important_c + error + reset_c);
+                colorConsole.error(`Erreur lors de la récupération des serveurs principaux : "${colorConsole.important(error)}"`);
             }
 
             if (!servPrimaire || !servSecondaire) {
@@ -106,7 +106,7 @@ module.exports = {
                 flags: MessageFlags.Ephemeral 
             });
         } catch (error) {
-            console.log(log_e + 'Erreur lors de la récupération des serveurs Minecraft : ' + important_c + error + reset_c);
+            colorConsole.error(`Erreur lors de la récupération des serveurs Minecraft : "${colorConsole.important(error)}"`);
             await interaction.reply({
                 content: 'Une erreur s\'est produite lors de l\'exécution de la commande. Veuillez réessayer plus tard.',
                 flags: MessageFlags.Ephemeral 

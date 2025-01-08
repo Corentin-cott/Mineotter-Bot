@@ -1,4 +1,5 @@
 const dbApiParametersController = require(__dirname + '/dbApiParametersController.js');
+const colorConsole = require(__dirname + '/colorConsole.js');
 const mysql = require('mysql2');
 const fs = require('fs');
 
@@ -14,9 +15,11 @@ function connectToDB() {
   return new Promise((resolve, reject) => {
     connection.connect(err => {
       if (err) {
-        reject('Error connecting to the database: ' + err.stack);
+        colorConsole.error(`Erreur lors de la connexion à la base de données : ${colorConsole.errorImportant(err)}`);
+        reject(err);
       } else {
-        resolve('Connected to the database.');
+        colorConsole.success('Connexion à la base de données établie.');
+        resolve();
       }
     });
   });
@@ -25,9 +28,9 @@ function connectToDB() {
 function closeConnection() {
   connection.end(err => {
     if (err) {
-      console.error('Error closing the connection:', err);
+      colorConsole.error(`Erreur lors de la fermeture de la connexion à la base de données : ${colorConsole.errorImportant(err)}`);
     } else {
-      console.log('Connection closed.');
+      colorConsole.success('Connexion à la base de données fermée.');
     }
   });
 }
@@ -116,7 +119,7 @@ async function getServeurStatus(id) {
       nb_joueurs: apiData.nb_joueurs
     };
   } catch (error) {
-    console.error('Error fetching server status:', error);
+    colorConsole.error(`Une erreur est survenue lors de la récupération du statut du serveur ${colorConsole.important(id)} : ${colorConsole.errorImportant(error)}`);
     return null;
   }
 }
@@ -151,7 +154,7 @@ async function startServer(id) {
 
     return data;
   } catch (error) {
-    console.error('Error starting server:', error);
+    colorConsole.error(`Une erreur est survenue lors du démarrage du serveur ${colorConsole.important(id)} : ${colorConsole.errorImportant(error)}`);
     return false;
   }
 }

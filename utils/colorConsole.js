@@ -23,11 +23,11 @@ function success(message) {
 }
 
 function important(message) {
-    console.log(important_color + message + reset_color);
+    return important_color + message + reset_color;
 }
 
 function errorImportant(message) {
-    console.log(error_color + message + reset_color);
+    return error_color + message + reset_color;
 }
 
 module.exports = {

@@ -1,3 +1,4 @@
+const colorConsole = require(__dirname + '/colorConsole.js');
 const mysql = require('mysql2');
 const fs = require('fs');
 
@@ -13,9 +14,11 @@ function connectToDB() {
   return new Promise((resolve, reject) => {
     connection.connect(err => {
       if (err) {
-        reject('Error connecting to the database: ' + err.stack);
+        colorConsole.error(`Error connecting to the database : ${colorConsole.errorImportant(err)}`);
+        reject(err);
       } else {
-        resolve('Connected to the database.');
+        colorConsole.success('Connected to the database.');
+        resolve();
       }
     });
   });
@@ -24,9 +27,9 @@ function connectToDB() {
 function closeConnection() {
   connection.end(err => {
     if (err) {
-      console.error('Error closing the connection:', err);
+      colorConsole.error(`Erreur lors de la fermeture de la connexion à la base de données : ${colorConsole.errorImportant(err)}`);
     } else {
-      console.log('Connection closed.');
+      colorConsole.success('Connexion à la base de données fermée.');
     }
   });
 }

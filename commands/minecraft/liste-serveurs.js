@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
+const colorConsole = require(__dirname + '/../utils/colorConsole.js');
 const { bot_color } = require(__dirname + '/../../config.json');
 const dbController = require(__dirname + '/../../utils/dbServeurController');
-const { log_i, log_s, log_e, error_c, reset_c, important_c } = require(__dirname + '/../../color_code.json');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -45,7 +45,7 @@ module.exports = {
             embed.addFields(fields);
             await interaction.reply({ embeds: [embed] });
         } catch (error) {
-            console.log(log_e + 'Erreur lors de la récupération de la liste des serveurs : ', error);
+            colorConsole.error(`Erreur lors de la récupération de la liste des serveurs : "${colorConsole.important(error)}"`);
             await interaction.reply({ 
                 content: 'Désolé, il y a eu une erreur en récupérant la liste des serveurs.',
                 flags: MessageFlags.Ephemeral 

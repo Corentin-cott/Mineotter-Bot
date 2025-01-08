@@ -1,11 +1,11 @@
 const {Client, Collection, GatewayIntentBits, Events} = require('discord.js');
+const colorConsole = require(__dirname + '/utils/colorConsole.js');
 const fs = require('fs');
 const path = require('path');
-const {log_s, log_i, log_w, log_e, important_c, reset_c, error_c} = require('./color_code.json');
 
 configPath = __dirname + '/config.json';
 if (!fs.existsSync(configPath)) {
-  console.error(log_e + `Le fichier "${important_c}config.json${reset_c}" n'existe pas. Veuillez le créer en lançant le script ${important_c}./scripts/deploy-config.js${reset_c}.`);
+  colorConsole.error(`Le fichier "${colorConsole.important('config.json')}" n'existe pas. Veuillez le créer en lançant le script ${colorConsole.important('./scripts/deploy-config.js')}.`);
   process.exit(1);
 }
 const {bot_token} = require(configPath);
@@ -16,7 +16,7 @@ const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits
 client.commands = new Collection(); // Collection pour stocker les commandes
 
 // Chargement des commandes
-console.log(log_i + 'Chargement des commandes...');
+colorConsole.log('Chargement des commandes...');
 
 const commandsPath = path.join(__dirname, 'commands');
 const commandFolder = fs.readdirSync(commandsPath);
@@ -30,15 +30,15 @@ for (const folder of commandFolder) {
     const command = require(filePath);
     if (command.data && command.execute) {
       client.commands.set(command.data.name, command);
-      console.log(log_s + `Commande chargée : ${important_c}${command.data.name}` + reset_c);
+      colorConsole.success(`Commande chargée : ${colorConsole.important(file)}`);
     } else {
-      console.warn(log_e + `La commande ${important_c}${file}${reset_c} n'est pas correctement formatée.`);
+      colorConsole.warn(`La commande ${colorConsole.important(file)} n'est pas correctement formatée`);
     }
   }
 }
 
 // Chargement des événements
-console.log(log_i + 'Chargement des événements...');
+colorConsole.log('Chargement des événements...');
 
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
@@ -52,14 +52,14 @@ for (const file of eventFiles) {
   } else {
     client.on(event.name, (...args) => event.execute(...args, client));
   }
-  console.log(log_s + `Événement chargé : ${important_c}${file}${reset_c}`);
+  colorConsole.success(`Événement chargé : ${colorConsole.important(file)}`);
 }
 
 // Connexion du bot
-console.log(log_i + 'Les commandes et événements ont été chargés. Connexion du bot...');
+colorConsole.log('Les commandes et événements ont été chargés. Connexion du bot...');
 
 client.once(Events.ClientReady, () => {
-  console.log(log_s + `Bot connecté en tant que ${important_c}${client.user.tag}` + reset_c);
+  colorConsole.success(`Bot connecté en tant que ${colorConsole.important(client.user.tag)}`);
 });
 
 client.login(bot_token);

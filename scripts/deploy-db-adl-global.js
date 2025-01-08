@@ -1,17 +1,17 @@
+const colorConsole = require(__dirname + '/../utils/colorConsole.js');
 const mysql = require('mysql2');
-const { db_host, db_user, db_password, serv_db_name } = require('../config.json');
-const { log_i, log_s, log_e, error_c, reset_c } = require('../color_code.json');
+const { db_host, db_user, db_password, api_db_name } = require('../config.json');
 
 // Création de la connexion à MySQL
 const connection = mysql.createConnection({
   host: db_host,
   user: db_user,
-  password: db_password
+  password: db_password,
 });
 
 // Fonction générique pour créer une table
 function createTable(query, table_name) {
-  console.log(log_i + `Création de la table ${table_name}...`);
+  colorConsole.log(`Création de la table ${colorConsole.important(table_name)}...`);
   return new Promise((resolve, reject) => {
     connection.query(query, (err, result) => {
       if (err) {
@@ -26,24 +26,24 @@ function createTable(query, table_name) {
 // Connexion à MySQL et création de la base de données
 connection.connect((err) => {
   if (err) {
-    console.log(log_e + 'Erreur de connexion à la base de données : "', error_c + err + reset_c + '"');
+    colorConsole.error(`Erreur de connexion à la base de données : "${colorConsole.errorImportant(err)}"`);
     return;
   }
-  console.log(log_s + 'Connexion à MySQL réussie.');
+  colorConsole.success('Connexion à la base de données établie.');
 
   // Vérification si la base de données existe
-  connection.query(`CREATE DATABASE IF NOT EXISTS ${serv_db_name};`, (err, result) => {
+  connection.query(`CREATE DATABASE IF NOT EXISTS ${api_db_name};`, (err, result) => {
     if (err) {
-      console.log(log_e + 'Erreur lors de la création de la base de données : "', error_c + err + reset_c + '"');
+      colorConsole.error(`Erreur lors de la création de la base de données : "${colorConsole.errorImportant(err)}"`);
       connection.end();
       return;
     }
-    console.log(log_s + `Base de données ${serv_db_name} créée ou déjà existante.`);
+    colorConsole.success(`Base de données ${colorConsole.important(api_db_name)} créée ou existante.`);
 
     // Sélectionner la base de données et créer les tables
-    connection.changeUser({ database: serv_db_name }, async (err) => {
+    connection.changeUser({ database: api_db_name }, async (err) => {
       if (err) {
-        console.log(log_e + 'Erreur lors du changement de base de données : "', error_c + err + reset_c + '"');
+        colorConsole.error(`Erreur lors du changement de base de données : "${colorConsole.errorImportant(err)}"`);
         connection.end();
         return;
       }
@@ -67,17 +67,6 @@ connection.connect((err) => {
               global BOOLEAN DEFAULT true NOT NULL
             );
           `, 'serveurs'),
-
-          createTable(`
-            CREATE TABLE IF NOT EXISTS utilisateurs_discord (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              discord_tag VARCHAR(20) NOT NULL,
-              pseudo_discord VARCHAR(255) NOT NULL,
-              join_date_discord DATETIME NOT NULL,
-              prem_connexion DATETIME,
-              dern_connexion DATETIME
-            );
-          `, 'utilisateurs_discord'),
 
           createTable(`
             CREATE TABLE IF NOT EXISTS serveurs_invests (
@@ -112,10 +101,32 @@ connection.connect((err) => {
           `, 'serveurs_parameters'),
 
           createTable(`
-            CREATE TABLE IF NOT EXISTS joueurs_mc (
+            CREATE TABLE IF NOT EXISTS utilisateurs_discord (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              discord_id VARCHAR(20) NOT NULL,
+              pseudo_discord VARCHAR(255) NOT NULL,
+              join_date_discord DATETIME NOT NULL,
+              prem_connexion DATETIME,
+              dern_connexion DATETIME
+            );
+          `, 'utilisateurs_discord'),
+
+          createTable(`
+            CREATE TABLE IF NOT EXISTS utilisateurs_activites (
               id INT AUTO_INCREMENT PRIMARY KEY,
               utilisateur_id INT NOT NULL,
-              uuid VARCHAR(255) NOT NULL,
+              points_total INT DEFAULT 0,
+              points_annee INT DEFAULT 0,
+              points_mois INT DEFAULT 0,
+              points_jour INT DEFAULT 0,
+              FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs_discord(id)
+            );
+          `, 'utilisateurs_activites'),
+
+          createTable(`
+            CREATE TABLE IF NOT EXISTS joueurs_mc (
+              uuid VARCHAR(255) PRIMARY KEY,
+              utilisateur_id INT NOT NULL,
               premiere_co DATETIME,
               derniere_co DATETIME,
               FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs_discord(id)
@@ -125,10 +136,10 @@ connection.connect((err) => {
           createTable(`
             CREATE TABLE IF NOT EXISTS serveurs_connections_log (
               id INT AUTO_INCREMENT PRIMARY KEY,
-              utilisateur_id INT NOT NULL,
+              joueurs_mc_uuid VARCHAR(255) NOT NULL,
               serveur_id INT NOT NULL,
               date DATETIME,
-              FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs_discord(id),
+              FOREIGN KEY (joueurs_mc_uuid) REFERENCES joueurs_mc(uuid),
               FOREIGN KEY (serveur_id) REFERENCES serveurs(id)
             );
           `, 'serveurs_connections_log'),
@@ -136,25 +147,25 @@ connection.connect((err) => {
           createTable(`
             CREATE TABLE IF NOT EXISTS stats_mc (
               id INT AUTO_INCREMENT PRIMARY KEY,
-              joueurs_mc_id INT NOT NULL,
               serveur_id INT NOT NULL,
+              joueurs_mc_uuid VARCHAR(255) NOT NULL,
               tmps_jeux BIGINT DEFAULT 0,
               nb_mort INT DEFAULT 0,
               nb_kills INT DEFAULT 0,
               nb_playerkill INT DEFAULT 0,
-              mob_killed JSON,
+              mob_killed JSON DEFAULT '{}',
               nb_blocs_detr INT DEFAULT 0,
               nb_blocs_pose INT DEFAULT 0,
               dist_total INT DEFAULT 0,
               dist_pieds INT DEFAULT 0,
               dist_elytres INT DEFAULT 0,
               dist_vol INT DEFAULT 0,
-              item_crafted JSON,
-              item_broken JSON,
-              achievement JSON,
+              item_crafted JSON DEFAULT '{}',
+              item_broken JSON DEFAULT '{}',
+              achievement JSON DEFAULT '{}',
               dern_enregistrment DATETIME NOT NULL,
-              FOREIGN KEY (joueurs_mc_id) REFERENCES joueurs_mc(id),
-              FOREIGN KEY (serveur_id) REFERENCES serveurs(id)
+              FOREIGN KEY (serveur_id) REFERENCES serveurs(id),
+              FOREIGN KEY (joueurs_mc_uuid) REFERENCES joueurs_mc(uuid)
             );
           `, 'stats_mc'),
 
@@ -176,13 +187,12 @@ connection.connect((err) => {
               FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs_discord(id),
               FOREIGN KEY (badge_id) REFERENCES badges(id)
             );
-          `, 'badges_utilisateurs')
+          `, 'badges_utilisateurs'),
         ]);
 
-        console.log(log_s + 'Toutes les tables ont été créées ou existent déjà.');
-
+        colorConsole.success('Toutes les tables ont été créées ou existent déjà.');
       } catch (error) {
-        console.log(log_e + 'Erreur lors de la création des tables : "', error_c + error + reset_c + '"');
+        colorConsole.error(`Erreur lors de la création des tables : "${colorConsole.errorImportant(error)}"`);
       } finally {
         connection.end();
       }

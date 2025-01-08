@@ -1,8 +1,8 @@
 const {REST, Routes} = require('discord.js');
+const colorConsole = require(__dirname + '/../utils/colorConsole.js');
 const fs = require('fs');
 const path = require('path');
 const {bot_token, bot_id} = require('../config.json');
-const {log_s, log_i, log_w, log_e, important_c, error_c, reset_c} = require('../color_code.json');
 
 // Initialisation de REST avec le token
 const rest = new REST({version: '10'}).setToken(bot_token);
@@ -11,9 +11,9 @@ const rest = new REST({version: '10'}).setToken(bot_token);
 (async () => {
   try {
     await rest.get(Routes.applicationCommands(bot_id)); // Test pour vérifier la connexion
-    console.log(log_s + 'Connexion au bot réussie.');
+    colorConsole.success('Connexion au bot réussie.');
   } catch (error) {
-    console.error(log_e + 'Impossible de se connecter au bot : "', error_c + error + reset_c + '"');
+    colorConsole.error(`Impossible de se connecter au bot : "${colorConsole.errorImportant(error)}"`);
   }
 })();
 
@@ -36,16 +36,16 @@ for (const folder of commandFolders) {
 }
 
 const commandNames = commands.map(command => command.name); // Extraire les noms des commandes
-console.log(log_i + 'Commandes prêtes pour enregistrement :', important_c + commandNames.join(', ') + reset_c);
+colorConsole.log('Commandes prêtes pour enregistrement :', colorConsole.important(commandNames.join(', ')));
 
 // Enregistrement avec Discord
 (async () => {
   try {
     await rest.put(Routes.applicationCommands(bot_id), {body: commands});
-    console.log(log_s + 'Commandes enregistrées avec succès !');
+    colorConsole.success('Commandes enregistrées avec succès !');
     process.exit(0);
   } catch (error) {
-    console.error(log_e + 'Erreur lors de l\'enregistrement des commandes : "', error_c + error + reset_c + '"');
+    colorConsole.error(`Erreur lors de l'enregistrement des commandes : "${colorConsole.errorImportant(error)}"`);
     process.exit(1);
   }
 })();
