@@ -38,7 +38,7 @@ Pour la base de données, vous pouvez l'installer via les scripts dans le dossie
 
 ## Il y a t'il une documentation pour l'améliorer ?
 
-Pas encore mais, mais c'est prévu oui.
+Pas encore, mais c'est prévu oui.
 
 ## Contributions
 
