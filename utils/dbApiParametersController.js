@@ -76,25 +76,6 @@ async function getParameterByName(parametre) {
   });
 }
 
-async function fetchServerStatus(alias, id) {
-  try {
-    const apiRoute = await getRouteByAlias(alias);
-    if (!apiRoute) {
-      throw new Error(`Route not found for alias "${alias}"`);
-    }
-
-    const fullApiRoute = `${apiRoute}${id}`;
-    console.log('Fetching server status from:', fullApiRoute);
-
-    const response = await fetch(fullApiRoute);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching server status:', error);
-    throw error;
-  }
-}
-
 module.exports = {
   connectToDB,
   closeConnection,
@@ -102,6 +83,5 @@ module.exports = {
   getRouteById,
   getRouteByAlias,
   getAllParameters,
-  getParameterByName,
-  fetchServerStatus
+  getParameterByName
 };
