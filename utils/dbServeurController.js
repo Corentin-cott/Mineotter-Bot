@@ -45,29 +45,11 @@ function getServerEmoji(server) {
   }
 }
 
-function getAllServers() {
-  return new Promise((resolve, reject) => {
-    connection.query('SELECT * FROM serveurs', (err, results) => {
-      if (err) reject(err);
-      else resolve(results);
-    });
-  });
-}
-
 function getServerById(id) {
   return new Promise((resolve, reject) => {
     connection.query('SELECT * FROM serveurs WHERE id = ?', [id], (err, results) => {
       if (err) reject(err);
       else resolve(results[0]);
-    });
-  });
-}
-
-function getAllActiveServers() {
-  return new Promise((resolve, reject) => {
-    connection.query('SELECT * FROM serveurs WHERE actif = 1', (err, results) => {
-      if (err) reject(err);
-      else resolve(results);
     });
   });
 }
@@ -199,9 +181,7 @@ module.exports = {
   connectToDB,
   closeConnection,
   getServerEmoji,
-  getAllServers,
   getServerById,
-  getAllActiveServers,
   getAllMinecraftServers,
   getAllActiveMinecraftServers,
   getServerPrimaire,
