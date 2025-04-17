@@ -18,7 +18,7 @@ export const command: SlashCommand =  {
             .setTitle("Dépôt GitHub de Mineotter")
             .setURL("https://github.com/Corentin-cott/mineotter-bot")
             .setDescription(`Et voilà pour toi le lien de mon magnifique dépôt GitHub !\nJe suis actuellement en version ${version}.`)
-            .setImage("https://github.com/Corentin-cott/mineotter-bot/raw/main/imgs/logo.png")
+            .setImage("https://raw.githubusercontent.com/Corentin-cott/Mineotter-Bot/refs/heads/main/imgs/logo-text.png")
             .setColor(bot_color as ColorResolvable)
             .setFooter({
                 text: "Mineotter",
