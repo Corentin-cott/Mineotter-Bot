@@ -35,6 +35,14 @@ const event: BotEvent = {
       return;
     }
 
+    
+    // Nom de la catégorie de gestion des serveurs
+    const serverManagmentCategoryName = process.env.SERVER_MANAGMENT_CATEGORY_NAME;
+    if (!serverManagmentCategoryName) {
+      otterlogs.error("ServerManagmentCategoryName non trouvée");
+      return;
+    }
+
     // Nom du rôle
     const roleName = process.env.ROLE_NAME;
     if (!roleName) {
@@ -78,7 +86,6 @@ const event: BotEvent = {
           channel.name === categoryName &&
           channel.type === ChannelType.GuildCategory
       );
-
       if (category) {
         otterlogs.log(`La catégorie "${categoryName}" existe déjà`);
       } else {
@@ -98,6 +105,33 @@ const event: BotEvent = {
           ],
         });
         otterlogs.success(`Catégorie "${categoryName}" créée avec les permissions !`);
+      }
+
+      // Vérifie si la catégorie de gestion des serveurs existe déjà
+      let serverManagmentCategory = guild.channels.cache.find(
+        (channel) =>
+          channel.name === serverManagmentCategoryName &&
+          channel.type === ChannelType.GuildCategory
+      );
+      if (serverManagmentCategory) {
+        otterlogs.log(`La catégorie "${serverManagmentCategoryName}" existe déjà`);
+      } else {
+        // Crée une catégorie avec les permissions pour le rôle spécifique
+        serverManagmentCategory = await guild.channels.create({
+          name: serverManagmentCategoryName,
+          type: ChannelType.GuildCategory,
+          permissionOverwrites: [
+            {
+              id: guild.id, // ID du serveur
+              deny: [PermissionFlagsBits.ViewChannel], // Interdire la vue des salons à tout le monde par défaut
+            },
+            {
+              id: role.id, // ID du rôle spécifique
+              allow: [PermissionFlagsBits.ViewChannel], // Autoriser la vue des salons pour le rôle spécifique
+            },
+          ],
+        });
+        otterlogs.success(`Catégorie "${serverManagmentCategoryName}" créée avec les permissions !`);
       }
 
       // Crée des salons à l'intérieur de la catégorie avec les mêmes permissions
