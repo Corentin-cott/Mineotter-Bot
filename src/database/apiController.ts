@@ -1,6 +1,14 @@
 import * as mysql from "mysql2/promise";
 import otterlogs from "../utils/otterlogs";
 
+export type TokenType = {
+    id: number;
+    utilisateur: string;
+    role: string;
+    token: string;
+    createdAt: Date;
+};
+
 export class ApiController {
     private readonly pool: mysql.Pool;
 
@@ -23,6 +31,17 @@ export class ApiController {
             return results.length > 0 ? results[0] : null;
         } catch (error) {
             otterlogs.error(`Erreur lors de la récupération de la route API : ${error}`);
+            return null;
+        }
+    }
+
+    async getToken() : Promise<TokenType | null> {
+        try {
+            const sql = "SELECT * FROM api_token WHERE utilisateur = 'multiloutre' LIMIT 1;";
+            const [results] = await this.pool.execute<mysql.RowDataPacket[]>(sql);
+            return results.length > 0 ? results[0] as TokenType : null;
+        } catch (error) {
+            otterlogs.error(`Erreur lors de la récupération du token API : ${error}`);
             return null;
         }
     }
