@@ -31,7 +31,8 @@ const event: BotEvent = {
 
                 if (action === 'lancer') {
                     const apiController = new ApiController() || ""
-                    let routeData = await apiController.getRouteByAlias("start-Serveur")
+                    const token = await apiController.getToken();
+                    let routeData = await apiController.getRouteByAlias("otr-start-serveur")
                     if (!routeData || !routeData.route) {
                         otterlogs.error("URL de démarrage du serveur introuvable ! Appeler dans la commande de lancement de serveur.");
                         await interaction.reply({
@@ -41,14 +42,12 @@ const event: BotEvent = {
                         return;
                     }
                     let startserv_url: string = routeData.route;
-                    let tokenAPI = process.env.API_TOKEN;
                     let serveurId = selectedServer.results[0].id;
                     
                     const response = await axios.post(startserv_url, {
-                        client_token: tokenAPI,
-                        id_serv: serveurId
+                        id: serveurId
                     }, {
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: { 'Authorization': `${token?.token}` }
                     });
 
                     await interaction.update({

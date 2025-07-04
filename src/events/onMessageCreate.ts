@@ -26,7 +26,7 @@ export default {
         case process.env.DISCU_MC:
           if (process.env.ENABLE_PRIMARY_SERVER_RCON && process.env.ENABLE_PRIMARY_SERVER_RCON === "true") {
             const rcon_primaire = new Rcon({
-              host: "194.164.76.165", // "??" gère le cas où la valeur est null en remplaçant par une chaîne vide
+              host: "antredesloutres.fr", // "??" gère le cas où la valeur est null en remplaçant par une chaîne vide
               port: 25575,
               password: await serverParameters.getRconPassword() ?? "",
             });
