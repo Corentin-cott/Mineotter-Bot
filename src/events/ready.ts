@@ -1,4 +1,5 @@
 import { Events, ChannelType, PermissionFlagsBits, Colors, Client, Guild } from "discord.js";
+const mysql = require('mysql2/promise');
 import * as fs from "fs";
 import { BotEvent } from "../types";
 import otterlogs from "../utils/otterlogs";
@@ -9,6 +10,24 @@ const event: BotEvent = {
   async execute(client: Client) {
     otterlogs.success(`Ready! Logged in as ${client.user?.tag}`);
     client.user?.setActivity("Minecraft");
+
+    // On test la connexion à la base de données MySQL
+    otterlogs.log("Test de la connexion à la base de données MySQL.");
+    try {
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 3306,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+
+      await connection.connect();
+      otterlogs.success("Connexion à la base de données réussie !");
+      await connection.end();
+    } catch (error) {
+      otterlogs.error(`Erreur lors de la connexion à la base de données : ${error}`);
+    }
 
     // Noms des salons à créer pour le fonctionnement de mineotter
     const channelNames: string[] = [
