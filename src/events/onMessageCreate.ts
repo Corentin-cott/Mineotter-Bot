@@ -30,7 +30,7 @@ export default {
               port: 25575,
               password: await serverParameters.getRconPassword() ?? "",
             });
-            // otterlogs.log(`RCON : ${rcon_primaire.config.host} ${rcon_primaire.config.port} ${rcon_primaire.config.password}`);
+            otterlogs.log(`RCON : ${rcon_primaire.config.host} ${rcon_primaire.config.port} ${rcon_primaire.config.password}`);
 
             try {
               // Envoi au premier serveur
@@ -44,11 +44,11 @@ export default {
 
           if (process.env.ENABLE_SECONDARY_SERVER_RCON && process.env.ENABLE_SECONDARY_SERVER_RCON === "true") {
             const rcon_secondaire = new Rcon({
-              host: (await serverParameters.getSecondaryServeurHost()) ?? "",
+              host: "antredesloutres.fr", // "??" gère le cas où la valeur est null en remplaçant par une chaîne vide
               port: 25574,
               password: await serverParameters.getRconPassword() ?? "",
             });
-            // otterlogs.log(`RCON : ${rcon_secondaire.config.host} ${rcon_secondaire.config.port} ${rcon_secondaire.config.password}`);
+            otterlogs.log(`RCON : ${rcon_secondaire.config.host} ${rcon_secondaire.config.port} ${rcon_secondaire.config.password}`);
         
             try {
               // Envoi au deuxième serveur
