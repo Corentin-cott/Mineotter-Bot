@@ -10,6 +10,7 @@ const logStyles = {
   resetColor: "\u001b[0m",
 };
 
+// Liste des méthodes de log
 const otterlogs = {
   success: (message: string): void => {
     console.log(logStyles.success, message);
@@ -30,6 +31,9 @@ const otterlogs = {
   important: (message: string): void => {
     console.log(`${logStyles.importantColor}${message}${logStyles.resetColor}`);
   },
+  silentlog: (message: string): void => {
+    console.log(message);
+  }
 };
 
 // Fonction pour envoyer un message dans le salon de logs

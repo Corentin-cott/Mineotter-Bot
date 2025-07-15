@@ -17,6 +17,22 @@ const client = new Client({
     ]
 });
 
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+});
+process.on("unhandledRejection", (reason, promise) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+otterlogs.silentlog(
+    " __  __                         _    _              \n" +
+    "|  \\/  |( ) _ __    ___   ___  | |_ | |_  ___  _ __ \n" +
+    "| |\\/| || || '_ \\  / _ \\ /   \\ | __|| __|/ _ \\| '__|\n" +
+    "| |  | || || | | ||  __/| ( ) || |_ | |_|  __/| |   \n" +
+    "|_|  |_||_||_| |_| \\___| \\___/  \\__| \\__|\\___||_|   \n" +
+    "- fait pour l'Antre des Loutres\n"
+)
+// ASCII art made with https://www.asciiart.eu/text-to-ascii-art
 
 try {
     client.slashCommands = new Collection<string, SlashCommand>();

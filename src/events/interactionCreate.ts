@@ -4,6 +4,7 @@ import otterlogs from "../utils/otterlogs";
 import { ServeursDatabase } from "../database/serveursController";
 import { ApiController } from "../database/apiController";
 import axios from 'axios';
+import handleSlashCommand from "../handlers/handleSlashCommand";
 
 const event: BotEvent = {
     name: Events.InteractionCreate,
@@ -12,12 +13,7 @@ const event: BotEvent = {
         try {
             // Gère les commandes slash
             if (interaction.isChatInputCommand()) {
-                const command = interaction.client.slashCommands.get(interaction.commandName);
-                if (!command || !command.execute) {
-                    otterlogs.warn(`Commande nommée "${interaction.commandName}" exécutée par ${interaction.user.tag} (ID: ${interaction.user.id}), mais la commande n'existe pas ou plus. Les commandes sont-elles à jour ?`);
-                    return interaction.reply({ content: "Cette commande n'existe pas ou plus ! ", ephemeral: true });
-                }
-                await command.execute(interaction);
+                return handleSlashCommand(interaction);
             }
             
             // Gère les interactions de sélection de serveurs
@@ -129,5 +125,38 @@ const event: BotEvent = {
         }
     }
 }
+
+/*
+import { Events, Interaction } from "discord.js";
+import { BotEvent } from "../types";
+import otterlogs from "../utils/otterlogs";
+import handleSlashCommand from "../handlers/handleSlashCommand";
+
+const event: BotEvent = {
+    name: Events.InteractionCreate,
+    once: false,
+    async execute(interaction: Interaction) {
+        try {
+            if (interaction.isChatInputCommand()) {
+                return handleSlashCommand(interaction);
+            }
+
+            if (interaction.isStringSelectMenu() && interaction.customId === 'serveur_select') {
+                // return handleServerSelect(interaction);
+            }
+        } catch (error) {
+            otterlogs.error(`Erreur dans InteractionCreate : ${error}`);
+            if (interaction.isRepliable()) {
+                await interaction.reply({
+                    content: "Une erreur est survenue lors de l'interaction.",
+                    ephemeral: true,
+                }).catch(() => {});
+            }
+        }
+    }
+};
+
+export default event;
+*/
 
 export default event;

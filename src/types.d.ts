@@ -1,4 +1,4 @@
-import { Collection, CommandInteraction, SlashCommandBuilder } from "discord.js";
+import { Collection, CommandInteraction, SlashCommandOptionsOnlyBuilder } from "discord.js";
 
 declare global {
     namespace NodeJS {
@@ -8,11 +8,11 @@ declare global {
             DEV_SERVEUR: string;
             BOT_COLOR: string;
             VERSION: string;
-            
+
             GUILD_ID: string;
             CATEGORY_NAME: string;
             ROLE_NAME: string;
-            
+
             DB_HOST: string;
             DB_USER: string;
             DB_PORT: number;
@@ -46,11 +46,9 @@ export interface I_Utilisateurs_discord {
 }
 
 export interface SlashCommand {
-    name: string,
-    data: SlashCommandBuilder | any,
-    async execute: (interaction: CommandInteraction) => Promise<void>
-    async execute?: (interaction: CommandInteraction) => Promise<void>
-    async autocomplete?: (interaction: CommandInteraction) => Promise<void>
+    name: string;
+    data: SlashCommandOptionsOnlyBuilder;
+    execute: (interaction: CommandInteraction) => Promise<void>;
 }
 
 export { };

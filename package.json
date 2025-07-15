@@ -24,7 +24,8 @@
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "mysql2": "^3.14.0",
-    "rcon-client": "^4.2.5"
+    "rcon-client": "^4.2.5",
+    "typescript": "^5.8.3"
   },
   "devDependencies": {
     "@types/axios": "^0.9.36",
