@@ -5,3 +5,4 @@ build
 .idea
 package-lock.json
 src/certs/.pem
+/src/certs
