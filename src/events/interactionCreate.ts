@@ -4,7 +4,7 @@ import otterlogs from "../utils/otterlogs";
 import { ServeursDatabase } from "../database/serveursController";
 import { ApiController } from "../database/apiController";
 import axios from 'axios';
-import handleSlashCommand from "../handlers/handleSlashCommand";
+import handleSlashCommands from "../handlers/handleSlashCommands";
 
 const event: BotEvent = {
     name: Events.InteractionCreate,
@@ -13,7 +13,7 @@ const event: BotEvent = {
         try {
             // Gère les commandes slash
             if (interaction.isChatInputCommand()) {
-                return handleSlashCommand(interaction);
+                return handleSlashCommands(interaction);
             }
             
             // Gère les interactions de sélection de serveurs
@@ -130,7 +130,7 @@ const event: BotEvent = {
 import { Events, Interaction } from "discord.js";
 import { BotEvent } from "../types";
 import otterlogs from "../utils/otterlogs";
-import handleSlashCommand from "../handlers/handleSlashCommand";
+import handleSlashCommands from "../handlers/handleSlashCommands";
 
 const event: BotEvent = {
     name: Events.InteractionCreate,
@@ -138,7 +138,7 @@ const event: BotEvent = {
     async execute(interaction: Interaction) {
         try {
             if (interaction.isChatInputCommand()) {
-                return handleSlashCommand(interaction);
+                return handleSlashCommands(interaction);
             }
 
             if (interaction.isStringSelectMenu() && interaction.customId === 'serveur_select') {

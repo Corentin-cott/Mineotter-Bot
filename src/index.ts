@@ -34,17 +34,22 @@ otterlogs.silentlog(
 )
 // ASCII art made with https://www.asciiart.eu/text-to-ascii-art
 
+client.slashCommands = new Collection<string, SlashCommand>();
+const loadersDirs = join(__dirname, "./loaders/");
+
 try {
-    client.slashCommands = new Collection<string, SlashCommand>();
-
-    const handlersDirs = join(__dirname, "./handlers/command-event");
-
-    readdirSync(handlersDirs).forEach(file => {
-        require(`${handlersDirs}/${file}`)(client)
-    })
-
+    readdirSync(loadersDirs).forEach(file => {
+        const loader = require(`${loadersDirs}/${file}`);
+        if (typeof loader === "function") {
+            loader(client);
+        } else if (loader && typeof loader.default === "function") {
+            loader.default(client);
+        } else {
+            otterlogs.warn(`Le fichier "${file}" n'exporte pas une fonction valide.`);
+        }
+    });
 } catch (error) {
-    otterlogs.error(`Erreur lors du chargement des commandes et des events : ${error}`);
+    otterlogs.error(`Erreur lors du chargement des commandes et/ou des events : ${error}`);
 }
 
 client.login(process.env.DISCORD_TOKEN);

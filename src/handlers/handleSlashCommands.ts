@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import otterlogs from "../utils/otterlogs";
 
-export default async function handleSlashCommand(interaction: ChatInputCommandInteraction) {
+export default async function handleSlashCommands(interaction: ChatInputCommandInteraction) {
     const command = interaction.client.slashCommands.get(interaction.commandName);
     if (!command?.execute) {
         otterlogs.warn(`Commande "${interaction.commandName}" inconnue (utilisateur : ${interaction.user.tag})`);
