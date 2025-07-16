@@ -56,57 +56,7 @@ export class ServeursDatabase {
         return this.query<Serveur>("SELECT * FROM serveurs WHERE id = ?", [id]);
     }
 
-    async getAllServeurs(): Promise<{ results: Serveur[]; fields: mysql.FieldPacket[] }> {
-        return this.query<Serveur>("SELECT * FROM serveurs WHERE jeu = 'Minecraft'");
-    }
-
-    async getAllGlobalServeurs(): Promise<{ results: Serveur[]; fields: mysql.FieldPacket[] }> {
-        return this.query<Serveur>("SELECT * FROM serveurs WHERE jeu = 'Minecraft' AND global = 1");
-    }
-
-    async getAllActifServeurs(): Promise<{ results: Serveur[]; fields: mysql.FieldPacket[] }> {
-        return this.query<Serveur>("SELECT * FROM serveurs WHERE jeu = 'Minecraft' AND actif = 1");
-    }
-
     async getAllGlobalActifServeurs(): Promise<{ results: Serveur[]; fields: mysql.FieldPacket[] }> {
         return this.query<Serveur>("SELECT * FROM serveurs WHERE jeu = 'Minecraft' AND actif = 1 AND global = 1");
-    }
-
-    async insertServeur(values: Omit<Serveur, "id">): Promise<{ results: mysql.OkPacket; fields: mysql.FieldPacket[] }> {
-        try {
-            const columns = Object.keys(values).join(', ');
-            const placeholders = Object.keys(values).map(() => '?').join(', ');
-            const insertValues = Object.values(values);
-            const sql = `INSERT INTO serveurs (${columns}) VALUES (${placeholders})`;
-            const [results, fields] = await this.pool.execute<mysql.OkPacket>(sql, insertValues);
-            return { results, fields };
-        } catch (error) {
-            otterlogs.error(`Erreur lors de l'insertion du serveur : ${error}`);
-            return { results: {} as mysql.OkPacket, fields: [] };
-        }
-    }
-
-    async updateServeur(id: number, values: Partial<Serveur>): Promise<{ results: mysql.OkPacket; fields: mysql.FieldPacket[] }> {
-        try {
-            const setClause = Object.keys(values).map(key => `${key} = ?`).join(', ');
-            const updateValues = Object.values(values);
-            const sql = `UPDATE serveurs SET ${setClause} WHERE id = ?`;
-            const [results, fields] = await this.pool.execute<mysql.OkPacket>(sql, [...updateValues, id]);
-            return { results, fields };
-        } catch (error) {
-            otterlogs.error(`Erreur lors de la mise à jour du serveur : ${error}`);
-            return { results: {} as mysql.OkPacket, fields: [] };
-        }
-    }
-
-    async deleteServeur(id: number): Promise<{ results: mysql.OkPacket; fields: mysql.FieldPacket[] }> {
-        try {
-            const sql = `DELETE FROM serveurs WHERE id = ?`;
-            const [results, fields] = await this.pool.execute<mysql.OkPacket>(sql, [id]);
-            return { results, fields };
-        } catch (error) {
-            otterlogs.error(`Erreur lors de la suppression du serveur : ${error}`);
-            return { results: {} as mysql.OkPacket, fields: [] };
-        }
     }
 }

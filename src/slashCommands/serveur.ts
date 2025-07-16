@@ -20,8 +20,6 @@ export const command: SlashCommand = {
     execute: async (interaction: CommandInteraction) => {
         const action = interaction.options.get('action')?.value as string;
         const db = new ServeursDatabase();
-        const serveurPrimaire = await db.getServeurById(1);
-        const serveurSecondaire = await db.getServeurById(2);
 
         let embedTitle = "";
         if (action === 'check') {
@@ -37,7 +35,7 @@ export const command: SlashCommand = {
             embedTitle = "Choisissez un serveur à démarrer";
         }
 
-        // Pour les autres actions on va utiliser un select menu
+        // Pour les autres actions, on va utiliser un select menu
         const serveursList = await db.getAllGlobalActifServeurs();
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('serveur_select')

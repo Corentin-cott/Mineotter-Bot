@@ -20,7 +20,7 @@ module.exports = (client: Client) => {
                 ? client.once(event.name, (...args) => event.execute(...args))
                 : client.on(event.name, (...args) => event.execute(...args))
 
-            loadedEvents.push(event.name);
+            loadedEvents.push(file);
         } catch (error) {
             failedEvents.push({ file, error: String(error) });
         }
