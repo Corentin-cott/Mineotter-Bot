@@ -3,7 +3,6 @@ import { readdirSync } from "fs";
 import path from "path";
 import otterlogs from "../utils/otterlogs";
 import { SlashCommand } from "../types";
-import * as fs from "node:fs";
 
 export default async function loadCommands(client: Client) {
     const commandsPath = path.resolve(__dirname, "../slashCommands");
@@ -13,6 +12,7 @@ export default async function loadCommands(client: Client) {
 
     const loadedCommands: string[] = [];
     const failedCommands: { file: string; error: string }[] = [];
+    const commandNames = new Set();
 
     for (const file of commandFiles) {
         try {
@@ -22,6 +22,13 @@ export default async function loadCommands(client: Client) {
                 failedCommands.push({ file, error: "Pas de propriété 'data'" });
                 continue;
             }
+
+            if (commandNames.has(command.name)) {
+                failedCommands.push({ file, error: `Commande "${command.name}" déjà chargée.` });
+                continue;
+            }
+
+            commandNames.add(command.name);
 
             body.push(command.data.toJSON());
             client.slashCommands.set(command.name, command);
@@ -36,13 +43,12 @@ export default async function loadCommands(client: Client) {
     try {
         await rest.put(Routes.applicationCommands(process.env.DISCORD_CLIENT_ID!), { body });
 
-        otterlogs.success(`${loadedCommands.length} commandes chargées :`);
-        otterlogs.log(`${loadedCommands.join(', ')}`);
+        otterlogs.success(`${loadedCommands.length} commandes chargées : ${loadedCommands.join(', ')}`);
 
         if (failedCommands.length > 0) {
             otterlogs.warn(`${failedCommands.length} commandes non chargées :`);
             failedCommands.forEach(({ file, error }) => {
-                otterlogs.error(`  - ${file} : ${error}`);
+                otterlogs.warn(`- ${file} : ${error}`);
             });
         } else {
             otterlogs.log("0 commandes non chargées");

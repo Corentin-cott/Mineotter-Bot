@@ -10,7 +10,6 @@ const event: BotEvent = {
   async execute(client: Client) {
     client.user?.setActivity("Minecraft");
 
-    otterlogs.log("Test de la connexion à la base de données MySQL.");
     try {
       const connection = await mysql.createConnection({
         host: process.env.DB_HOST,
@@ -20,7 +19,7 @@ const event: BotEvent = {
         database: process.env.DB_NAME,
       });
       await connection.connect();
-      otterlogs.success("Connexion à la base de données réussie !");
+      otterlogs.success("Connexion à la base de données réussie");
       await connection.end();
     } catch (error) {
       otterlogs.error(`Erreur MySQL : ${error}`);
@@ -34,9 +33,15 @@ const event: BotEvent = {
     } = process.env;
 
     if (!GUILD_ID || !CATEGORY_NAME || !SERVER_MANAGMENT_CATEGORY_NAME || !ROLE_NAME) {
-      otterlogs.error("Une ou plusieurs variables d'environnement manquent.");
+      otterlogs.error("Une ou plusieurs variables d'environnement manquent");
       return;
     }
+
+    // Lancement de la tâche périodique
+    import("../task/task").then(task => {
+      task.task(client, process.env.GUILD_ID);
+    });
+    otterlogs.success("Les tâches périodiques ont été initialisés")
 
     const guild = client.guilds.cache.get(GUILD_ID);
     if (!guild) return otterlogs.error("Guild non trouvée");

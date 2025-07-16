@@ -26,13 +26,12 @@ module.exports = (client: Client) => {
         }
     })
 
-    otterlogs.success(`${loadedEvents.length} events chargées :`);
-    otterlogs.log(`${loadedEvents.join(', ')}`);
+    otterlogs.success(`${loadedEvents.length} events chargées : ${loadedEvents.join(', ')}`);
 
     if (failedEvents.length > 0) {
         otterlogs.warn(`${failedEvents.length} events non chargées :`);
         failedEvents.forEach(({ file, error }) => {
-            otterlogs.error(`  - ${file} : ${error}`);
+            otterlogs.error(`- ${file} : ${error}`);
         });
     } else {
         otterlogs.log("0 events non chargées");
