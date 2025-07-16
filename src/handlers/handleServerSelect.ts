@@ -1,9 +1,11 @@
 import { StringSelectMenuInteraction } from "discord.js";
 import otterlogs from "../utils/otterlogs";
 import { ServeursDatabase } from "../database/serveursController";
+import { fetchServerById } from '../services/api/otterlyapi';
 import Docker from 'dockerode';
 import fs from 'fs';
 import path from "path";
+import {ServeurType} from "../types/otterly";
 
 export default async function handleServerSelect(interaction: StringSelectMenuInteraction) {
     try {
@@ -26,9 +28,19 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
         }
 
         if (action === "lancer") {
-            const containerName = "creatif"; // Récupéré depuis la DB
+            // Récupération du serveur selectionné par l'utilisateur
+            let serveur: ServeurType;
+            try {
+                serveur = await fetchServerById(1);
+            } catch (err) {
+                otterlogs.error(`Une erreur est survenue lors de la récupération du serveur avec l'API : ${err}`)
+                return interaction.reply({
+                    content: "Une erreur est survenue. Merci de contacter un administrateur !",
+                    ephemeral: true,
+                });
+            }
 
-            if (!containerName) {
+            if (!serveur.contenaire) {
                 otterlogs.error("Nom du conteneur manquant dans la base de données.");
                 return interaction.reply({
                     content: "Erreur : Impossible de trouver le conteneur du serveur.",
@@ -46,13 +58,12 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
                     key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
                 });
 
-                const container = docker.getContainer(containerName);
-
+                const container = docker.getContainer(serveur.contenaire);
                 await container.start();
 
                 await interaction.update({
                     embeds: [buildServerEmbed(interaction, serverInfo, "démarré")],
-                    content: "Le serveur a été démarré avec succès via Docker distant.",
+                    content: "Le serveur a été démarré avec succès.",
                     components: [],
                 });
 
@@ -60,11 +71,11 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
                 if (error.statusCode === 304) {
                     await interaction.update({
                         embeds: [buildServerEmbed(interaction, serverInfo, "déjà démarré")],
-                        content: "Le serveur était déjà démarré.",
+                        content: "Le serveur est déjà démarré.",
                         components: [],
                     });
                 } else {
-                    otterlogs.error(`Erreur Docker (distant) sur "${containerName}" : ${error.message || error}`);
+                    otterlogs.error(`Erreur Docker (distant) sur "${serveur.contenaire}" : ${error.message || error}`);
                     await interaction.reply({
                         content: "Erreur lors du démarrage du conteneur distant.",
                         ephemeral: true,
