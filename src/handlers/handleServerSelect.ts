@@ -2,6 +2,8 @@ import { StringSelectMenuInteraction } from "discord.js";
 import otterlogs from "../utils/otterlogs";
 import { ServeursDatabase } from "../database/serveursController";
 import Docker from 'dockerode';
+import fs from 'fs';
+import path from "path";
 
 export default async function handleServerSelect(interaction: StringSelectMenuInteraction) {
     try {
@@ -36,9 +38,12 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
 
             try {
                 const docker = new Docker({
-                    host: "antredesloutres.fr", // ou son IP
-                    port: 2375,
-                    protocol: "http",
+                    host: process.env.DOCKER_HOST,
+                    port: process.env.DOCKER_PORT,
+                    protocol: "https",
+                    ca: fs.readFileSync(path.join(__dirname, 'certs', 'ca.pem')),
+                    cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem')),
+                    key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
                 });
 
                 const container = docker.getContainer(containerName);
