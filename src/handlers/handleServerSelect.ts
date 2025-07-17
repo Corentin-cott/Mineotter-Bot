@@ -1,7 +1,7 @@
 import { StringSelectMenuInteraction } from "discord.js";
 import otterlogs from "../utils/otterlogs";
-import launchServer from "./handleServerSelect/handleServerLaunch";
-import showServerInfo from "./handleServerSelect/handleShowServerInfos";
+import launchServer from "./handleServerActions/handleServerLaunch";
+import showServerInfo from "./handleServerActions/handleShowServerInfos";
 import {ServeurType} from "../types/otterly";
 import {fetchServerById} from "../services/api/otterlyapi";
 

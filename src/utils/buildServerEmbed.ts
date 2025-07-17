@@ -1,7 +1,7 @@
 import { StringSelectMenuInteraction } from "discord.js";
 import { ServeurType } from "../types/otterly";
 import getEmojiByName from "../utils/getBotEmoji"
-type EmbedType = 'infos' | 'démarré' | 'déjà démarré';
+type EmbedType = 'infos' | 'démarré' | 'déjà démarré' | 'arrêté';
 
 export default function buildServerEmbed(
     interaction: StringSelectMenuInteraction,
@@ -10,8 +10,9 @@ export default function buildServerEmbed(
 ) {
     const title: string =
         type === 'démarré' ? `Serveur ${serveur.nom} démarré` :
-            type === 'déjà démarré' ? `Serveur ${serveur.nom} déjà actif` :
-                `Informations sur le serveur ${serveur.nom}`;
+            type === 'arrêté' ? `Serveur ${serveur.nom} arrêté` :
+                type === 'déjà démarré' ? `Serveur ${serveur.nom} déjà actif` :
+                    `Informations sur le serveur ${serveur.nom}`;
 
     const descriptionFallBack: string =
         type === 'démarré'

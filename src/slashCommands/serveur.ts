@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, CommandInteraction, StringSelectMenuBuilder, ActionRowBuilder, ColorResolvable, Interaction } from 'discord.js';
 import { SlashCommand } from '../types';
 import { ServeursDatabase } from "../database/serveursController";
+import showServerCheck from "../handlers/handleServerCheck";
 
 export const command: SlashCommand = {
     name: 'serveur',
@@ -23,12 +24,7 @@ export const command: SlashCommand = {
 
         let embedTitle = "";
         if (action === 'check') {
-            // Not implemented yet
-            await interaction.reply({
-                content: "Cette action n'est pas encore implémentée.",
-                ephemeral: true
-            });
-            return;
+            showServerCheck(interaction)
         } else if (action === 'infos') {
             embedTitle = "Choisissez un serveur pour afficher ses informations";
         } else if (action === 'lancer') {
