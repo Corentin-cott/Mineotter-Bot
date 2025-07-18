@@ -6,14 +6,17 @@ import {ServeurType} from "../types/otterly";
 import {fetchServerById} from "../services/api/otterlyapi";
 
 export default async function handleServerSelect(interaction: StringSelectMenuInteraction) {
+    // deferReply permet de faire durer l'interaction afin que le bot ait le temps d'effectuer de longues actions (ex : fermer le serveur)
+    await interaction.deferUpdate();
+    
     try {
         const [selectedServerId, action, utilisateurId] = interaction.values[0]?.split('|') ?? [];
 
         if (!selectedServerId || !action || !utilisateurId) {
-            return interaction.reply({ content: process.env.ERROR_MESSAGE });
+            return interaction.editReply({ content: process.env.ERROR_MESSAGE });
         }
         if (interaction.user.id !== utilisateurId) {
-            return interaction.reply({ content: "Cette sélection ne t'appartient pas !", ephemeral: true });
+            return interaction.editReply({ content: "Cette sélection ne t'appartient pas !" });
         }
 
         let serveur: ServeurType;
@@ -21,7 +24,7 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
             serveur = await fetchServerById(parseInt(selectedServerId));
         } catch (err) {
             otterlogs.error(`Erreur Otterly API : ${err}`);
-            return interaction.reply({ content: process.env.ERROR_MESSAGE });
+            return interaction.editReply({ content: process.env.ERROR_MESSAGE });
         }
 
         switch (action) {
@@ -30,10 +33,10 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
             case "infos":
                 return await showServerInfo(interaction, serveur);
             default:
-                return interaction.reply({ content: process.env.ERROR_MESSAGE });
+                return interaction.editReply({ content: process.env.ERROR_MESSAGE });
         }
     } catch (err) {
         otterlogs.error(`Erreur dans handleServerSelect : ${err}`);
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
+        return interaction.editReply({ content: process.env.ERROR_MESSAGE, embeds: [], components: []})
     }
 }

@@ -59,7 +59,7 @@ export default async function launchServer(interaction: StringSelectMenuInteract
             return; // On ne fait rien si le conteneur est déjà arrêté
         }
 
-        // Fermeture silencieuse du serveur en cours
+        // Fermeture silencieuse du serveur qui prend la place (type) du serveur à ouvrir
         await shutdownServer(interaction, serveur.type, true);
 
         // Arrêt du conteneur correspondant une fois la fermeture propre finie
@@ -68,21 +68,21 @@ export default async function launchServer(interaction: StringSelectMenuInteract
                 await primaryConteneur.stop();
                 otterlogs.success("Le contenaire à été fermé avec succès !")
             } catch (error) {
-                console.error("Erreur lors de l'arrêt du conteneur primaire :", error);
+                otterlogs.error(`Erreur lors de l'arrêt du conteneur primaire : ${error}`);
             }
         } else if (serveur.type === "secondary" && secondaireConteneur) {
             try {
                 await secondaireConteneur.stop();
                 otterlogs.success("Le contenaire à été fermé avec succès !")
             } catch (error) {
-                console.error("Erreur lors de l'arrêt du conteneur secondaire :", error);
+                otterlogs.error(`Erreur lors de l'arrêt du conteneur secondaire : ${error}`);
             }
         }
     }
 
     if (!serveur.contenaire) {
         otterlogs.error("Conteneur manquant, lancement du serveur impossible.");
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
+        return interaction.editReply({ content: process.env.ERROR_MESSAGE });
     }
 
     // Passage à l'ouverture du serveur
@@ -100,23 +100,23 @@ export default async function launchServer(interaction: StringSelectMenuInteract
             });
         } else {
             otterlogs.error(`Docker error sur ${serveur.contenaire} : ${error.statusCode} : ${error.message}`);
-            return interaction.reply({ content: process.env.ERROR_MESSAGE });
+            return interaction.editReply({ content: process.env.ERROR_MESSAGE });
         }
     }
 
-    let success: Promise<boolean>
+    let success: boolean
     try {
-        success = updateSecondaryServerId(serveur.id)
+        success = await updateSecondaryServerId(serveur.id)
     } catch (err) {
         otterlogs.error(`Erreur Otterly API : ${err}`);
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
+        return interaction.editReply({ content: process.env.ERROR_MESSAGE });
     }
 
     if (!success) {
         otterlogs.warn("L'ID du serveur secondaire n'a pas été changé dans la BDD")
     }
 
-    return interaction.update({
+    return interaction.editReply({
         embeds: [buildServerEmbed(interaction, serveur, "démarré")],
         content: "Le serveur a été démarré avec succès.",
         components: [],

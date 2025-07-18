@@ -24,7 +24,7 @@ export const command: SlashCommand = {
 
         let embedTitle = "";
         if (action === 'check') {
-            showServerCheck(interaction)
+            await showServerCheck(interaction)
         } else if (action === 'infos') {
             embedTitle = "Choisissez un serveur pour afficher ses informations";
         } else if (action === 'lancer') {
