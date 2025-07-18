@@ -11,7 +11,7 @@ import {
     fetchPrimaryServer,
     updateSecondaryServerId
 } from "../../services/api/otterlyapi";
-import shutdownServer from "./shutdownServer";
+import handleShutdownServer from "./handleShutdownServer";
 
 export default async function launchServer(interaction: StringSelectMenuInteraction, serveur: ServeurType) {
     // Récupération des serveurs qui sont actuellement supposés être lancés
@@ -60,7 +60,7 @@ export default async function launchServer(interaction: StringSelectMenuInteract
         }
 
         // Fermeture silencieuse du serveur qui prend la place (type) du serveur à ouvrir
-        await shutdownServer(interaction, serveur.type, true);
+        await handleShutdownServer(interaction, serveur.type, true);
 
         // Arrêt du conteneur correspondant une fois la fermeture propre finie
         if (serveur.type === "primary" && primaryConteneur) {

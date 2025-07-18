@@ -8,7 +8,7 @@ import { fetchPrimaryServer, fetchSecondaryServer } from "../../services/api/ott
 
 type ServerPos = 'primary' | 'secondary' | 'partenaire';
 
-export default async function shutdownServer(interaction: StringSelectMenuInteraction, type: ServerPos, silent: boolean = false) {
+export default async function handleShutdownServer(interaction: StringSelectMenuInteraction, type: ServerPos, silent: boolean = false) {
     const serverParams = new ServeurParametersController();
     let rconConfig;
 

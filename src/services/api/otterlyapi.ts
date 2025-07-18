@@ -20,9 +20,13 @@ export const fetchSecondaryServer = async (): Promise<ServeurType | null> => {
 };
 
 export const fetchPrimaryAndSecondaryServers = async (): Promise<{ primary: ServeurType; secondary: ServeurType }> => {
-    const serveurs = await fetchAllServeurs();
-    const primary = serveurs.find(s => s.type === 'primary');
-    const secondary = serveurs.find(s => s.type === 'secondary');
+    const response = await axios.get<OtterlyApiResponse>(`${BASE_URL}/serveurs/primaire-secondaire`);
+    if (!response.data.success) {
+        throw new Error('Erreur lors de la récupération des serveurs primaire et secondaire');
+    }
+
+    const primary = response.data.data.find(s => s.type === 'primary');
+    const secondary = response.data.data.find(s => s.type === 'secondary');
 
     if (!primary || !secondary) {
         throw new Error('Primary and/or secondary server not found');
@@ -32,9 +36,13 @@ export const fetchPrimaryAndSecondaryServers = async (): Promise<{ primary: Serv
 };
 
 export const fetchPrimaryAndSecondaryIds = async (): Promise<{ primaryId: number; secondaryId: number }> => {
-    const serveurs = await fetchAllServeurs();
-    const primary = serveurs.find(s => s.type === 'primary');
-    const secondary = serveurs.find(s => s.type === 'secondary');
+    const response = await axios.get<OtterlyApiResponse>(`${BASE_URL}/serveurs/primaire-secondaire`);
+    if (!response.data.success) {
+        throw new Error('Erreur lors de la récupération des serveurs primaire et secondaire');
+    }
+
+    const primary = response.data.data.find(s => s.type === 'primary');
+    const secondary = response.data.data.find(s => s.type === 'secondary');
 
     if (!primary || !secondary) {
         throw new Error('Primary and/or secondary server not found');

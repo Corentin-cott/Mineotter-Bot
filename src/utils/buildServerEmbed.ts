@@ -1,4 +1,4 @@
-import { StringSelectMenuInteraction } from "discord.js";
+import {CommandInteraction, StringSelectMenuInteraction} from "discord.js";
 import { ServeurType } from "../types/otterly";
 import getEmojiByName from "../utils/getBotEmoji"
 type EmbedType = 'infos' | 'démarré' | 'déjà démarré' | 'arrêté';
@@ -48,6 +48,47 @@ export default function buildServerEmbed(
         footer: {
             text: "Mineotter",
             icon_url: interaction.user?.displayAvatarURL() || "",
+        },
+        timestamp: new Date().toISOString(),
+    };
+}
+
+export function buildServerCheckEmbed(
+    interaction: CommandInteraction | StringSelectMenuInteraction,
+    primary: ServeurType,
+    secondary: ServeurType
+) {
+    const isDev: boolean = process.env.ENVIRONNEMENT === "DEV";
+    const emojiMcvan: string = getEmojiByName("mc_van", isDev);
+    const emojiMcmod: string = getEmojiByName("mc_mod", isDev);
+
+    return {
+        title: "État des serveurs Minecraft",
+        description: "Voici les informations sur les deux serveurs principaux de l'Antre des Loutres.",
+        color: parseInt(process.env.BOT_COLOR.replace("#", ""), 16),
+        fields: [
+            {
+                name: `${emojiMcvan} ${primary.nom} (${primary.type === "primary" ? "Principal" : "Secondaire"})`,
+                value:
+                    `**Jeu** : ${primary.jeu || "Non spécifié"}\n` +
+                    `**Version** : ${primary.version || "Non spécifiée"}\n` +
+                    `**Modpack** : ${primary.modpack && primary.modpack_url ? `[${primary.modpack}](${primary.modpack_url})` : "Aucun"}\n` +
+                    `**Joueurs connectés** : ${primary.players_online ?? 0}`,
+                inline: false,
+            },
+            {
+                name: `${emojiMcmod} ${secondary.nom} (${secondary.type === "secondary" ? "Secondaire" : "Principal"})`,
+                value:
+                    `**Jeu** : ${secondary.jeu || "Non spécifié"}\n` +
+                    `**Version** : ${secondary.version || "Non spécifiée"}\n` +
+                    `**Modpack** : ${secondary.modpack && secondary.modpack_url ? `[${secondary.modpack}](${secondary.modpack_url})` : "Aucun"}\n` +
+                    `**Joueurs connectés** : ${secondary.players_online ?? 0}`,
+                inline: false,
+            },
+        ],
+        footer: {
+            text: "Mineotter",
+            icon_url: interaction.user?.displayAvatarURL() || "https://thumb.canalplus.pro/http/unsafe/1920x1080/smart/creativemedia-image.canalplus.pro/content/0001/40/97e6a76d9788e3e0eea6fddbd68b4fb8b8d5cdda.jpeg",
         },
         timestamp: new Date().toISOString(),
     };

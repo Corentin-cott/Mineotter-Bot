@@ -1,28 +1,23 @@
-import {CommandInteraction, StringSelectMenuInteraction} from "discord.js";
-import {ServeurType} from "../types/otterly";
-import {fetchPrimaryServer, fetchSecondaryServer, fetchServerById} from "../services/api/otterlyapi";
+import { CommandInteraction } from "discord.js";
+import { ServeurType } from "../types/otterly";
+import { fetchPrimaryAndSecondaryServers } from "../services/api/otterlyapi";
 import otterlogs from "../utils/otterlogs";
+import { buildServerCheckEmbed } from "../utils/buildServerEmbed";
 
 export default async function showServerCheck(interaction: CommandInteraction) {
-    let serveurPrimaire: ServeurType | null;
-    let serveurSecondaire: ServeurType | null;
     try {
-        serveurPrimaire = await fetchPrimaryServer();
-    } catch (err) {
-        otterlogs.error(`Erreur Otterly API : ${err}`);
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
-    }
-    try {
-        serveurSecondaire = await fetchSecondaryServer();
-    } catch (err) {
-        otterlogs.error(`Erreur Otterly API : ${err}`);
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
-    }
-    if (serveurPrimaire === null || serveurSecondaire === null) {
-        otterlogs.error("Soit le serveur primaire ou le serveur secondaire renvoyé par l'API est null");
-        return interaction.reply({ content: process.env.ERROR_MESSAGE });
-    }
+        const { primary, secondary } = await fetchPrimaryAndSecondaryServers();
 
-    let primairePlayerCount: number;
-    let secondairePlayerCount: number;
+        return interaction.reply({
+            embeds: [buildServerCheckEmbed(interaction, primary, secondary)],
+            content: "Voici nos serveurs actuellement ouverts !",
+            components: [],
+        });
+    } catch (err) {
+        otterlogs.error(`Erreur Otterly API : ${err}`);
+        return interaction.reply({
+            content: process.env.ERROR_MESSAGE || "Une erreur est survenue lors de la récupération des serveurs.",
+            ephemeral: true,
+        });
+    }
 }
