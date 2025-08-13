@@ -3,3 +3,6 @@ node_modules
 .env
 build
 .idea
+package-lock.json
+src/certs/.pem
+/src/certs

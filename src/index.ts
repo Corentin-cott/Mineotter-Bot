@@ -17,18 +17,39 @@ const client = new Client({
     ]
 });
 
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+});
+process.on("unhandledRejection", (reason, promise) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+otterlogs.silentlog(
+    " __  __                         _    _              \n" +
+    "|  \\/  |( ) _ __    ___   ___  | |_ | |_  ___  _ __ \n" +
+    "| |\\/| || || '_ \\  / _ \\ /   \\ | __|| __|/ _ \\| '__|\n" +
+    "| |  | || || | | ||  __/| ( ) || |_ | |_|  __/| |   \n" +
+    "|_|  |_||_||_| |_| \\___| \\___/  \\__| \\__|\\___||_|   \n" +
+    "- fait pour l'Antre des Loutres\n"
+)
+// ASCII art made with https://www.asciiart.eu/text-to-ascii-art
+
+client.slashCommands = new Collection<string, SlashCommand>();
+const loadersDirs = join(__dirname, "./loaders/");
 
 try {
-    client.slashCommands = new Collection<string, SlashCommand>();
-
-    const handlersDirs = join(__dirname, "./handlers/command-event");
-
-    readdirSync(handlersDirs).forEach(file => {
-        require(`${handlersDirs}/${file}`)(client)
-    })
-
+    readdirSync(loadersDirs).forEach(file => {
+        const loader = require(`${loadersDirs}/${file}`);
+        if (typeof loader === "function") {
+            loader(client);
+        } else if (loader && typeof loader.default === "function") {
+            loader.default(client);
+        } else {
+            otterlogs.warn(`Le fichier "${file}" n'exporte pas une fonction valide.`);
+        }
+    });
 } catch (error) {
-    otterlogs.error(`Erreur lors du chargement des commandes et des events : ${error}`);
+    otterlogs.error(`Erreur lors du chargement des commandes et/ou des events : ${error}`);
 }
 
 client.login(process.env.DISCORD_TOKEN);

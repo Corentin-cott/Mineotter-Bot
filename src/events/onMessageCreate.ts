@@ -6,100 +6,116 @@ import otterlogs from "../utils/otterlogs";
 export default {
   name: Events.MessageCreate,
   async execute(message: Message) {
-    if (message.author.bot) return; // Ignore les messages des bots
+    if (message.author.bot) return;
 
-    const messageContent = message.content.toLowerCase();
-    if (messageContent.includes("mineotter")) {
-      message.react("🦦");
+    const content = message.content.toLowerCase();
+    if (content.includes("mineotter")) {
+      await message.react("🦦").catch(() => null);
     }
 
-    if (message.channelId === process.env.DISCU_MC || message.channelId === process.env.DISCU_MC_PARTENAIRE) {
-      otterlogs.log(`Message reçu dans le salon ${message.channelId} par ${message.author.tag} (${message.author.id})`);
+    const { channelId, author } = message;
 
-      const author_name = escapeMinecraftJson(message.author.username);
-      const discord_message = escapeMinecraftJson(replaceEmojis(message.content));
-      const message_to_send = `tellraw @a ["",{"text":"<${author_name}>","color":"#7289DA"},{"text":" ${discord_message}"}]`;
-  
-      const serverParameters = new ServeurParametersController();
+    const isMcChannel = [
+      process.env.DISCU_MC,
+      process.env.DISCU_MC_PARTENAIRE
+    ].includes(channelId);
 
-      switch (message.channelId) {
-        case process.env.DISCU_MC:
-          if (process.env.ENABLE_PRIMARY_SERVER_RCON && process.env.ENABLE_PRIMARY_SERVER_RCON === "true") {
-            const rcon_primaire = new Rcon({
-              host: "antredesloutres.fr", // "??" gère le cas où la valeur est null en remplaçant par une chaîne vide
-              port: 25575,
-              password: await serverParameters.getRconPassword() ?? "",
-            });
-            otterlogs.log(`RCON : ${rcon_primaire.config.host} ${rcon_primaire.config.port} ${rcon_primaire.config.password}`);
+    if (!isMcChannel) return;
 
-            try {
-              // Envoi au premier serveur
-              await (rcon_primaire).connect();
-              await (rcon_primaire).send(message_to_send);
-              await (rcon_primaire).end();
-            } catch (error) {
-              otterlogs.error(`Failed to send message to primary server : ${error}`);
-            }
-          }
+    const formattedMessage = `tellraw @a ["",{"text":"<${escapeMinecraftJson(author.username)}>","color":"#7289DA"},{"text":" ${escapeMinecraftJson(replaceEmojis(message.content))}"}]`;
 
-          if (process.env.ENABLE_SECONDARY_SERVER_RCON && process.env.ENABLE_SECONDARY_SERVER_RCON === "true") {
-            const rcon_secondaire = new Rcon({
-              host: "antredesloutres.fr", // "??" gère le cas où la valeur est null en remplaçant par une chaîne vide
-              port: 25574,
-              password: await serverParameters.getRconPassword() ?? "",
-            });
-            otterlogs.log(`RCON : ${rcon_secondaire.config.host} ${rcon_secondaire.config.port} ${rcon_secondaire.config.password}`);
-        
-            try {
-              // Envoi au deuxième serveur
-              await (rcon_secondaire).connect();
-              await (rcon_secondaire).send(message_to_send);
-              await (rcon_secondaire).end();
-            } catch (error) {
-              otterlogs.error(`Failed to send message to secondary server : ${error}`);
-            }
-          }
-        break;
-        case process.env.DISCU_MC_PARTENAIRE:
-          if (process.env.ENABLE_PARTENAIRE_SERVER_RCON && process.env.ENABLE_PARTENAIRE_SERVER_RCON === "true") {
-            const rcon_partenaire = new Rcon({
-              host: (await serverParameters.getPartenaireServeurHost()) ?? "",
-              port: 25580,
-              password: await serverParameters.getPartenaireRconPassword() ?? "",
-            });
-            // otterlogs.log(`RCON : ${rcon_partenaire.config.host} ${rcon_partenaire.config.port} ${rcon_partenaire.config.password}`);
-        
-            try {
-              // Envoi au deuxième serveur
-              await (rcon_partenaire).connect();
-              await (rcon_partenaire).send(message_to_send);
-              await (rcon_partenaire).end();
-            } catch (error) {
-              otterlogs.error(`Failed to send message to secondary server : ${error}`);
-            }
-          }
-        break;
-        default:
-          otterlogs.error(`Le salon ${message.channelId} n'est pas configuré pour envoyer des messages au serveur Minecraft... Cette situation ne devrait pas pouvoir arriver !`);
-        break;
+    const serverParams = new ServeurParametersController();
+
+    let configs: { host: string, port: number, password: string }[] = [];
+    try {
+      configs = await buildRconConfigs(channelId, serverParams);
+    } catch (error) {
+      otterlogs.error(`Errreur lors du build de la configuration RCON : ${error}`);
+    }
+    if (!configs.length) {
+      otterlogs.warn(`Aucun serveur RCON configuré et/ou activé pour le salon ${channelId}`);
+      return;
+    }
+
+    otterlogs.log(`Message reçu dans le salon ${channelId} par ${author.tag} (${author.id}), envoi du message dans ${configs.length} serveurs.`);
+
+    for (const cfg of configs) {
+      try {
+        await sendRconMessage(cfg, formattedMessage);
+      } catch (err) {
+        otterlogs.error(`Erreur RCON [${cfg.host}:${cfg.port}] : ${err}`);
       }
     }
-  },
+  }
 };
 
-function escapeMinecraftJson(text: string) {
+async function buildRconConfigs(channelId: string, serverParams: ServeurParametersController) {
+  const configs: { host: string, port: number, password: string }[] = [];
+
+  if (channelId === process.env.DISCU_MC) {
+    if (process.env.ENABLE_PRIMARY_SERVER_RCON === "true") {
+      configs.push({
+        host: process.env.PRIMARY_SERVER_RCON_HOST ?? "localhost",
+        port: 25575,
+        password: await serverParams.getRconPassword() ?? "password"
+      });
+    }
+
+    if (process.env.ENABLE_SECONDARY_SERVER_RCON === "true") {
+      configs.push({
+        host: process.env.SECONDARY_SERVER_RCON_HOST ?? "localhost",
+        port: 25574,
+        password: await serverParams.getRconPassword() ?? "password"
+      });
+    }
+  } else if (channelId === process.env.DISCU_MC_PARTENAIRE) {
+    if (process.env.ENABLE_PARTENAIRE_SERVER_RCON === "true") {
+      configs.push({
+        host: process.env.PARTENAIRE_SERVER_RCON_HOST ?? "localhost",
+        port: 25580,
+        password: await serverParams.getPartenaireRconPassword() ?? "password"
+      });
+    }
+  }
+
+  return configs.filter(cfg => cfg.host && cfg.password);
+}
+
+async function sendRconMessage(config: { host: string; port: number; password: string }, message: string) {
+  const rcon = new Rcon(config);
+
+  let hasThrown = false;
+
+  const errorListener = (err: Error) => {
+    hasThrown = true;
+    otterlogs.error(`RCON internal error (${config.host}:${config.port}): ${err.message}`);
+  };
+
+  rcon.on("error", errorListener);
+
+  try {
+    await rcon.connect();
+    if (!hasThrown) {
+      await rcon.send(message);
+    }
+  } catch (err) {
+    otterlogs.error(`RCON connection/send failed: ${err}`);
+  } finally {
+    rcon.off("error", errorListener); // Nettoyage
+    await rcon.end().catch(() => null); // ignore les erreurs ici
+  }
+}
+
+function escapeMinecraftJson(text: string): string {
   return text
-    .replace(/\\/g, '\\\\') // Échappe les antislashs
-    .replace(/"/g, '\\"')   // Échappe les guillemets doubles
-    .replace(/\n/g, '\\n')  // Échappe les sauts de ligne
-    .replace(/\r/g, '')     // Supprime les retours chariots inutiles
-    .replace(/\t/g, '\\t'); // Échappe les tabulations
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '')
+      .replace(/\t/g, '\\t');
 }
 
 function replaceEmojis(text: string): string {
-  // Remplace les emojis Discord par un emoji générique
-  let no_emoji_text = text.replace(/<:([a-zA-Z0-9_]+):[0-9]+>/g, (match, p1) => '🦦');
-  no_emoji_text = no_emoji_text.replace(/<a:([a-zA-Z0-9_]+):[0-9]+>/g, (match, p1) => '🦦');
-  // Renvoyer le texte avec les emojis remplacés
-  return no_emoji_text;
+  return text
+      .replace(/<a?:\w+:\d+>/g, "🦦");
 }

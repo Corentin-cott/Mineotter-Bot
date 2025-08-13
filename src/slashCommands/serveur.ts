@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder, CommandInteraction, StringSelectMenuBuilder, ActionRowBuilder, ColorResolvable, Interaction } from 'discord.js';
 import { SlashCommand } from '../types';
 import { ServeursDatabase } from "../database/serveursController";
+import showServerCheck from "../handlers/handleServerCheck";
 
 export const command: SlashCommand = {
     name: 'serveur',
@@ -20,24 +21,17 @@ export const command: SlashCommand = {
     execute: async (interaction: CommandInteraction) => {
         const action = interaction.options.get('action')?.value as string;
         const db = new ServeursDatabase();
-        const serveurPrimaire = await db.getServeurById(1);
-        const serveurSecondaire = await db.getServeurById(2);
 
         let embedTitle = "";
         if (action === 'check') {
-            // Not implemented yet
-            await interaction.reply({
-                content: "Cette action n'est pas encore implémentée.",
-                ephemeral: true
-            });
-            return;
+            await showServerCheck(interaction)
         } else if (action === 'infos') {
             embedTitle = "Choisissez un serveur pour afficher ses informations";
         } else if (action === 'lancer') {
             embedTitle = "Choisissez un serveur à démarrer";
         }
 
-        // Pour les autres actions on va utiliser un select menu
+        // Pour les autres actions, on va utiliser un select menu
         const serveursList = await db.getAllGlobalActifServeurs();
         const selectMenu = new StringSelectMenuBuilder()
             .setCustomId('serveur_select')
