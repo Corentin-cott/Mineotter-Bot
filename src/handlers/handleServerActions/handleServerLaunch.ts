@@ -118,7 +118,7 @@ export default async function launchServer(interaction: StringSelectMenuInteract
 
     return interaction.editReply({
         embeds: [buildServerEmbed(interaction, serveur, "démarré")],
-        content: "Le serveur a été démarré avec succès.",
+        content: "Le serveur a été démarré avec succès, il sera bientôt en ligne.",
         components: [],
     });
 }

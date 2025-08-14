@@ -8,6 +8,8 @@ export default function buildServerEmbed(
     serveur: ServeurType,
     type: EmbedType
 ) {
+    const nomServeur = serveur.nom?.trim() || "Inconnu";
+
     const title: string =
         type === 'démarré' ? `Serveur ${serveur.nom} démarré` :
             type === 'arrêté' ? `Serveur ${serveur.nom} arrêté` :
@@ -47,7 +49,7 @@ export default function buildServerEmbed(
         image: serveur.image ? { url: serveur.image } : { url: "https://thumb.canalplus.pro/http/unsafe/1920x1080/smart/creativemedia-image.canalplus.pro/content/0001/40/97e6a76d9788e3e0eea6fddbd68b4fb8b8d5cdda.jpeg"},
         footer: {
             text: "Mineotter",
-            icon_url: interaction.user?.displayAvatarURL() || "",
+            icon_url: interaction.user?.displayAvatarURL() || undefined,
         },
         timestamp: new Date().toISOString(),
     };

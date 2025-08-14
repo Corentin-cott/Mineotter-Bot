@@ -12,12 +12,19 @@ export default async function handleServerSelect(interaction: StringSelectMenuIn
     try {
         const [selectedServerId, action, utilisateurId] = interaction.values[0]?.split('|') ?? [];
 
+        // Une donnée est manquante
         if (!selectedServerId || !action || !utilisateurId) {
             return interaction.editReply({ content: process.env.ERROR_MESSAGE });
         }
+        // Interdit le mauvais utilisateur de répondre
         if (interaction.user.id !== utilisateurId) {
             return interaction.editReply({ content: "Cette sélection ne t'appartient pas !" });
         }
+        // Désactiver le menu de sélection dans le message initial
+        await interaction.editReply({
+            content: "Une seconde...",
+            components: [] // on retire tous les menus/boutons
+        });
 
         let serveur: ServeurType;
         try {
