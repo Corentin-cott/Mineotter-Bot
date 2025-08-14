@@ -19,8 +19,8 @@ export default async function launchServer(interaction: StringSelectMenuInteract
 
     // Configuration dockerode
     const docker = new Docker({
-        host: process.env.DOCKER_HOST,
-        port: process.env.DOCKER_PORT,
+        host: process.env.DOCKER_SERVICE_HOST,
+        port: process.env.DOCKER_SERVICE_PORT,
         protocol: "https",
         ca: fs.readFileSync(path.join("./src/", "certs", "ca.pem")),
         cert: fs.readFileSync(path.join("./src/", "certs", "cert.pem")),
