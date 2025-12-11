@@ -66,7 +66,7 @@ export default {
         await interaction.deferReply();
 
         // 1. Retrieve server details
-        const servers = await Otterlyapi.getDataByAlias<Server[]>('otr-serveurs');
+        const servers = await Otterlyapi.getDataByAlias<Server[]>('otr-serveurs-primaire-secondaire');
 
         if (!servers) {
             await interaction.editReply("Impossible de récupérer la liste des serveurs.");
