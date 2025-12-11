@@ -1,6 +1,6 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { Otterlyapi } from "../utils/otterlyapi/otterlyapi";
-import { rconHelper } from "../../app/utils/rconHelpler";
+import { rconHelper } from "../../app/utils/rconHelper";
 import { RconConfig } from "../../app/types/rconTypes";
 import { otterlogs } from "../utils/otterlogs";
 
