@@ -31,7 +31,6 @@ export async function otterBots_loadCommands(client: Client): Promise<void> {
 
         try {
             client.slashCommands = new Collection<string, SlashCommand>();
-            const commandsData = [];
 
             for (const file of commandFiles) {
                 if (file.endsWith(".d.ts")) continue;
@@ -48,9 +47,12 @@ export async function otterBots_loadCommands(client: Client): Promise<void> {
                 }
 
                 client.slashCommands.set(command.data.name, command);
-                commandsData.push(command.data.toJSON());
                 otterlogs.log(`Command registered: ${command.data.name}`);
             }
+
+            // Deduplicate commands: generate payload from the unique collection values
+            const commandsData = client.slashCommands.map(c => c.data.toJSON());
+
             // Send commands to Discord
             const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN!);
             await rest.put(
