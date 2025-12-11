@@ -1,7 +1,7 @@
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { getSalonByAlias } from "../../otterbots/utils/salon";
 import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
-import { rconHelper } from "../utils/rconHelpler";
+import { rconHelper } from "../utils/rconHelper";
 import { cleanUserMessage } from "../utils/discordMessageCleaner";
 import { RconConfig } from "../types/rconTypes";
 import { ActiveServer } from "../types/activeServeurType";
@@ -26,7 +26,7 @@ module.exports = {
 
             // Construction of the tellraw command
             const cleanMessage = cleanUserMessage(message);
-            const tellrawObject=["",{text:"<"},{text:message.author.username,color:"#7289DA",hoverEvent:{action:"show_text",contents:"Message provenant de Discord"}},{text:`> ${cleanMessage}`}];
+            const tellrawObject = ["", { text: "<" }, { text: message.author.username, color: "#7289DA", hoverEvent: { action: "show_text", contents: "Message provenant de Discord" } }, { text: `> ${cleanMessage}` }];
 
             // JSON.stringify ensures safe escaping of special characters
             const command: string = `/tellraw @a ${JSON.stringify(tellrawObject)}`;
