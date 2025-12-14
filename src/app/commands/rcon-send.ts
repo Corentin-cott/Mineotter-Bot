@@ -4,7 +4,6 @@ import { rconHelper } from "../utils/rconHelper";
 import { RconConfig } from "../types/rconTypes";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { ActiveServer } from "../types/activeServeurType";
-import { server } from "typescript";
 
 export default {
     data: new SlashCommandBuilder()
@@ -25,7 +24,7 @@ export default {
     async autocomplete(interaction: AutocompleteInteraction) {
         const focusedValue = interaction.options.getFocused();
 
-        // Fetch active servers
+        // Récupérer les serveurs actifs
         const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>('otr-serveurs-primaire-secondaire');
 
         if (!servers || !Array.isArray(servers)) {
@@ -33,17 +32,12 @@ export default {
             return;
         }
 
-        // Filter servers based on user input (focusedValue)
-        // Assuming server object has a 'name' or 'alias' field. 
-        // If not, we might need to inspect the data structure.
-        // For now, I'll assume there's a 'nom' or 'name' field.
+        // Filtrer les serveurs selon la saisie de l'utilisateur
         const filtered = servers.filter(server =>
             (server.host).toLowerCase().includes(focusedValue.toLowerCase())
         );
 
-        // Map to choices. Name is what user sees, Value is what we get in execute (e.g. ID or unique name)
-        // Using 'nom' as value for now, or maybe 'id' if available.
-        // Let's use the name as the value to look it up again.
+        // Mapper les choix. Le nom est affiché à l'utilisateur, la valeur est utilisée dans execute
         await interaction.respond(
             filtered.slice(0, 25).map(server => ({ name: server.host || "Unknown", value: server.id.toString() }))
         );
@@ -55,7 +49,7 @@ export default {
 
         await interaction.deferReply();
 
-        // 1. Retrieve server details
+        // Récupérer les détails du serveur
         const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>('otr-serveurs-primaire-secondaire');
 
         if (!servers) {
@@ -78,26 +72,22 @@ export default {
             timeout: 5000
         };
 
-        // Basic validation
+        // Validation de base
         if (!rconConfig.host || !rconConfig.port || !rconConfig.password) {
             await interaction.editReply(`Configuration RCON incomplète pour le serveur '${serverId}'.`);
             return;
         }
 
-        // Security: Prevent RCON injection by disallowing newlines
+        // Sécurité : Empêcher l'injection RCON en interdisant les retours à la ligne
         if (command.includes('\n') || command.includes('\r')) {
             await interaction.editReply("Les sauts de ligne ne sont pas autorisés dans les commandes RCON.");
             return;
         }
 
-        // Note: No explicit cooldown is implemented here. 
-        // Discord's rate limits and the bot's execution speed provide some natural throttling,
-        // but a dedicated cooldown system in the command handler would be better for high-traffic bots.
-
-        // 3. Send Command
+        // Envoyer la commande
         const response = await rconHelper.sendCommand(rconConfig, command);
 
-        // 4. Reply
+        // Répondre
         const embed = new EmbedBuilder()
             .setTitle(`RCON: ${serverId}`)
             .addFields(
