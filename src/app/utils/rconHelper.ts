@@ -4,46 +4,24 @@ import { RconConfig } from "../types/rconTypes"
 
 export const rconHelper = {
     /**
-     * Connects to a Minecraft server with Rcon, sends a command, logs the response, and disconnects.
-     * @param config - The RCON connection details (host, port, password)
-     * @param command - The actual Minecraft command (e.g., "say Hello")
-     * @returns The response from the server if it gives one.
+     * Connects to a Minecraft server via RCON, runs a command, returns the response.
      */
     async sendCommand(config: RconConfig, command: string): Promise<string | null> {
-        // Input validation
-        if (!command || command.trim() === "") {
-            otterlogs.warn(`Attempted to send empty command.`);
+        if (!command?.trim()) {
+            otterlogs.warn("Attempted to send empty command.");
             return null;
         }
 
-        const rcon = new Rcon({
-            host: config.host,
-            port: config.port,
-            password: config.password,
-            timeout: config.timeout
-        });
+        const rcon = new Rcon(config);
 
         try {
-            // Connect
             await rcon.connect();
-
-            // Send Command
-            const response = await rcon.send(command);
-
-            // Disconnect immediately to free resources
-            await rcon.end();
-
-            return response;
-
+            return await rcon.send(command);
         } catch (error) {
             otterlogs.error(`Error sending command to ${config.host}: ${error}`);
-
-            // Ensure connection is closed even if an error occurs
-            try { await rcon.end(); } catch (e) {
-                console.warn("Rcon : " + e);
-            }
-
             return null;
+        } finally {
+            try { await rcon.end(); } catch (e) { console.warn("Rcon : " + e); }
         }
     }
 };

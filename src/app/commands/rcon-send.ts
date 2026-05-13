@@ -1,9 +1,10 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
 import { rconHelper } from "../utils/rconHelper";
-import { RconConfig } from "../types/rconTypes";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { ActiveServer } from "../types/activeServeurType";
+
+const ACTIVE_SERVERS_ALIAS = "otr-serveurs-primaire-secondaire";
 
 export default {
     data: new SlashCommandBuilder()
@@ -22,25 +23,20 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const focusedValue = interaction.options.getFocused();
+        const focused = interaction.options.getFocused().toLowerCase();
+        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
 
-        // Récupérer les serveurs actifs
-        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>('otr-serveurs-primaire-secondaire');
-
-        if (!servers || !Array.isArray(servers)) {
+        if (!Array.isArray(servers)) {
             await interaction.respond([]);
             return;
         }
 
-        // Filtrer les serveurs selon la saisie de l'utilisateur
-        const filtered = servers.filter(server =>
-            (server.host).toLowerCase().includes(focusedValue.toLowerCase())
-        );
+        const choices = servers
+            .filter(s => s.host?.toLowerCase().includes(focused))
+            .slice(0, 25)
+            .map(s => ({ name: s.host || "Unknown", value: s.id.toString() }));
 
-        // Mapper les choix. Le nom est affiché à l'utilisateur, la valeur est utilisée dans execute
-        await interaction.respond(
-            filtered.slice(0, 25).map(server => ({ name: server.host || "Unknown", value: server.id.toString() }))
-        );
+        await interaction.respond(choices);
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -49,45 +45,38 @@ export default {
 
         await interaction.deferReply();
 
-        // Récupérer les détails du serveur
-        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>('otr-serveurs-primaire-secondaire');
-
-        if (!servers) {
-            await interaction.editReply("Impossible de récupérer la liste des serveurs.");
-            return;
-        }
-        otterlogs.log(servers.toString())
-        const targetServer = servers.find(s => (s.id) === parseInt(serverId));
-        if (!targetServer) {
-            await interaction.editReply(`Serveur '${serverId}' introuvable.`);
-            otterlogs.error(`Serveur '${serverId}' introuvable.`);
-            return;
-        }
-
-
-        const rconConfig: RconConfig = {
-            host: targetServer.rcon_host || "unknown",
-            port: parseInt(targetServer.rcon_port || "0"),
-            password: targetServer.rcon_password || "unknown",
-            timeout: 5000
-        };
-
-        // Validation de base
-        if (!rconConfig.host || !rconConfig.port || !rconConfig.password) {
-            await interaction.editReply(`Configuration RCON incomplète pour le serveur '${serverId}'.`);
-            return;
-        }
-
-        // Sécurité : Empêcher l'injection RCON en interdisant les retours à la ligne
-        if (command.includes('\n') || command.includes('\r')) {
+        // Reject newlines to prevent RCON command injection
+        if (/[\r\n]/.test(command)) {
             await interaction.editReply("Les sauts de ligne ne sont pas autorisés dans les commandes RCON.");
             return;
         }
 
-        // Envoyer la commande
-        const response = await rconHelper.sendCommand(rconConfig, command);
+        const password = process.env.RCON_PASSWORD;
+        if (!password) {
+            otterlogs.error("RCON_PASSWORD is not set in environment variables.");
+            await interaction.editReply("RCON_PASSWORD n'est pas défini dans les variables d'environnement.");
+            return;
+        }
 
-        // Répondre
+        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
+        const target = servers?.find(s => s.id === parseInt(serverId));
+        if (!target) {
+            otterlogs.error(`Server '${serverId}' not found.`);
+            await interaction.editReply(`Serveur '${serverId}' introuvable.`);
+            return;
+        }
+
+        const port = parseInt(target.rcon_port || "0");
+        if (!target.rcon_host || !port) {
+            await interaction.editReply(`Configuration RCON incomplète pour le serveur '${serverId}'.`);
+            return;
+        }
+
+        const response = await rconHelper.sendCommand(
+            { host: target.rcon_host, port, password, timeout: 5000 },
+            command
+        );
+
         const embed = new EmbedBuilder()
             .setTitle(`RCON: ${serverId}`)
             .addFields(

@@ -37,12 +37,18 @@ module.exports = {
                 otterlogs.debug(`API Response: ${JSON.stringify(response)}`);
 
                 if (response && Array.isArray(response)) {
+                    const rconPassword = process.env.RCON_PASSWORD;
+                    if (!rconPassword) {
+                        otterlogs.error("RCON_PASSWORD is not set in environment variables.");
+                        return;
+                    }
+
                     // CHANGE: Iterate over 'response', not 'response.data'
                     await Promise.all(response.map(async (server) => {
                         const rcon: RconConfig = {
                             host: server.rcon_host,
                             port: parseInt(server.rcon_port),
-                            password: server.rcon_password,
+                            password: rconPassword,
                             timeout: 5000
                         };
 
