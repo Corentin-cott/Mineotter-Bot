@@ -4,6 +4,28 @@ import { Serveur } from "../types/serveurType";
 export const SERVEURS_ALIAS = "otr-serveurs";
 export const DEPRECATED_MARKER = "depreciated";
 export const ANTRE_BASE_URL = "https://antredesloutres.fr";
+export const MANAGED_GAMES_WILDCARD = "*";
+
+/**
+ * Returns the list of games this bot manages, parsed from GAMES_MANAGED env.
+ * - Unset or "*" → wildcard (no game filter).
+ * - "Minecraft,Palworld" → array of lowercase names for case-insensitive matching.
+ */
+function getManagedGames(): typeof MANAGED_GAMES_WILDCARD | string[] {
+    const raw = process.env.GAMES_MANAGED?.trim();
+    if (!raw || raw === MANAGED_GAMES_WILDCARD) return MANAGED_GAMES_WILDCARD;
+    return raw.split(",").map(g => g.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * Tells whether the bot is allowed to handle a server based on its game,
+ * driven by the GAMES_MANAGED environment variable.
+ */
+export function isGameManaged(s: Serveur): boolean {
+    const managed = getManagedGames();
+    if (managed === MANAGED_GAMES_WILDCARD) return true;
+    return managed.includes(s.jeu.toLowerCase());
+}
 
 /**
  * A server is startable if it has a real Docker container associated
@@ -38,12 +60,13 @@ export function resolveImageUrl(image: string | undefined): string | undefined {
 }
 
 /**
- * Fetches the full server list from Otterlyapi.
- * Returns an empty array if the call fails or yields no data.
+ * Fetches the server list from Otterlyapi and keeps only the games this bot
+ * is allowed to manage (per GAMES_MANAGED env). Returns an empty array on
+ * failure or when no data is returned.
  */
 export async function fetchAllServeurs(): Promise<Serveur[]> {
     const data = await Otterlyapi.getDataByAlias<Serveur[]>(SERVEURS_ALIAS);
-    return Array.isArray(data) ? data : [];
+    return Array.isArray(data) ? data.filter(isGameManaged) : [];
 }
 
 /**
