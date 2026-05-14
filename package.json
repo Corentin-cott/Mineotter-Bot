@@ -24,6 +24,7 @@
   "dependencies": {
     "axios": "^1.12.2",
     "discord.js": "^14.23.2",
+    "dockerode": "^5.0.0",
     "dotenv": "^17.2.3",
     "figlet": "^1.9.3",
     "node-cron": "^4.2.1",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
+    "@types/dockerode": "^4.0.1",
     "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",

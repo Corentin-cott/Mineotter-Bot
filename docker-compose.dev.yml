@@ -1,0 +1,12 @@
+services:
+  docker-proxy-dev:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-proxy-dev
+    environment:
+      CONTAINERS: 1
+      POST: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:2375:2375"
+    restart: unless-stopped
