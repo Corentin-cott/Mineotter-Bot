@@ -1,7 +1,9 @@
 import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
 import { Serveur } from "../types/serveurType";
+import { ActiveServer } from "../types/activeServeurType";
 
 export const SERVEURS_ALIAS = "otr-serveurs";
+export const ACTIVE_SERVERS_ALIAS = "otr-serveurs-primaire-secondaire";
 export const DEPRECATED_MARKER = "depreciated";
 export const ANTRE_BASE_URL = "https://antredesloutres.fr";
 export const MANAGED_GAMES_WILDCARD = "*";
@@ -76,4 +78,37 @@ export async function fetchAllServeurs(): Promise<Serveur[]> {
 export async function findServeurById(id: number): Promise<Serveur | undefined> {
     const servers = await fetchAllServeurs();
     return servers.find(s => s.id === id);
+}
+
+/**
+ * Fetches the active-servers list (the one that carries RCON connection info)
+ * and returns the entry whose `serveurs_id` matches the given Serveur id,
+ * or undefined if not found.
+ */
+export async function findActiveServerForServeurId(
+    serveurId: number,
+): Promise<ActiveServer | undefined> {
+    const active = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
+    if (!Array.isArray(active)) return undefined;
+    return active.find(s => s.serveurs_id === serveurId);
+}
+
+/**
+ * Parses Minecraft's `list` RCON response.
+ * Example response: "There are 2 of a max of 20 players online: alice, bob"
+ * Returns null when the format isn't recognised (e.g. non-Minecraft server).
+ */
+export function parseMinecraftPlayerList(
+    raw: string | null,
+): { online: number; max: number; players: string[] } | null {
+    if (!raw) return null;
+    const m = /There are (\d+) of a max of (\d+) players online:?\s*(.*)$/i.exec(raw.trim());
+    if (!m) return null;
+    const online = parseInt(m[1], 10);
+    const max = parseInt(m[2], 10);
+    const players = m[3]
+        .split(",")
+        .map(p => p.trim())
+        .filter(Boolean);
+    return { online, max, players };
 }

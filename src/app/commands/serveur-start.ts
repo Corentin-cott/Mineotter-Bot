@@ -31,7 +31,7 @@ const STRINGS = {
         alreadyRunning: (name: string) =>
             `Le serveur **${name}** tourne déjà, c'est pas génial ça ?`,
         startFailed: (container: string) =>
-            `Échec du démarrage du conteneur \`${container}\`. Merci de contactez un administrateur et donnez-lui le code suivant : \`500-${container}\``,
+            `Échec du démarrage du serveur. Merci de contactez un administrateur et donnez-lui le code suivant : \`500-${container}\``,
     },
     logs: {
         inspectFailed: (container: string, err: unknown) =>
