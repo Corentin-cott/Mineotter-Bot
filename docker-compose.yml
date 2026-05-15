@@ -15,10 +15,14 @@ services:
     networks:
       - mineotter_bridge
       - discord-bots-net
+      - games-net
 
 networks:
   mineotter_bridge:
     driver: bridge
   discord-bots-net:
     name: discord-bots-net
+    external: true
+  games-net:
+    name: server-net
     external: true
