@@ -9,6 +9,9 @@ services:
       - .env
     environment:
       DOCKER_HOST: tcp://docker_proxy-discord_bots:2375
+    volumes:
+      - ./channels.json:/app/channels.json
+      - ./otterlyApiRoutes.json:/app/otterlyApiRoutes.json
     networks:
       - mineotter_bridge
       - discord-bots-net
