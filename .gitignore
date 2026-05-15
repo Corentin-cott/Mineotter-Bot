@@ -3,11 +3,11 @@
 
 # production
 /build
-
 .env
-
-.idea
-
 channels.json
-
 otterlyApiRoutes.json
+
+# ide & ia
+.idea
+.vscode
+.claude
