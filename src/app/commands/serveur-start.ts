@@ -7,6 +7,7 @@ import {
 } from "discord.js";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
+import { applyBotBranding } from "../utils/embedBranding";
 import {
     fetchAllServeurs,
     findServeurById,
@@ -137,6 +138,8 @@ export default {
             )
             .setColor(parseColor(target.embed_color) ?? DEFAULT_EMBED_COLOR)
             .setTimestamp();
+
+        applyBotBranding(embed, interaction);
 
         await interaction.editReply({ embeds: [embed] });
     },

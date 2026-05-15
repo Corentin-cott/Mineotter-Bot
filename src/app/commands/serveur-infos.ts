@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
+import { applyBotBranding } from "../utils/embedBranding";
 import { rconHelper } from "../utils/rconHelper";
 import {
     fetchAllServeurs,
@@ -14,7 +15,6 @@ import {
     isStartable,
     parseColor,
     parseMinecraftPlayerList,
-    resolveImageUrl,
 } from "../utils/serverHelper";
 
 const STRINGS = {
@@ -113,8 +113,7 @@ export default {
             embed.setDescription(target.description);
         }
 
-        const thumbnail = resolveImageUrl(target.image);
-        if (thumbnail) embed.setThumbnail(thumbnail);
+        applyBotBranding(embed, interaction);
 
         // ─── Container state ────────────────────────────────────────────
         let isRunning = false;
