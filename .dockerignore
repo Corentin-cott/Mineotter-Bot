@@ -1,0 +1,33 @@
+# Dependencies & build artefacts — regenerated inside the image
+node_modules
+build
+
+# VCS
+.git
+.gitignore
+.github
+
+# Secrets — must never enter the build context
+.env
+.env.*
+!.env.example
+
+# Runtime state — bind-mounted from the host at deploy time
+channels.json
+otterlyApiRoutes.json
+
+# IDE & editor
+.idea
+.vscode
+*.iml
+
+# Docs & misc
+README.md
+LICENSE
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
