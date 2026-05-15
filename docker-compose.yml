@@ -1,17 +1,24 @@
 services:
   mineotter:
-    build: .
     image: mineotter:latest
-    container_name: mineotter
+    container_name: bot_discord-mineotter
     restart: unless-stopped
+    ports:
+      - "9503:3000"
     env_file:
       - .env
     environment:
+      # Always go through the shared docker-socket-proxy in prod.
+      # Overrides any DOCKER_HOST coming from .env.
       DOCKER_HOST: tcp://docker_proxy-discord_bots:2375
     networks:
+      - mineotter_bridge
       - discord-bots-net
 
 networks:
+  mineotter_bridge:
+    driver: bridge
+  # Created by the shared docker-proxy compose; Mineotter only joins it.
   discord-bots-net:
     name: discord-bots-net
     external: true
