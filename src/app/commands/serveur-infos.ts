@@ -8,7 +8,9 @@ import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
 import { applyBotBranding } from "../utils/embedBranding";
 import { rconHelper } from "../utils/rconHelper";
+import { ActiveServer } from "../types/activeServeurType";
 import {
+    ANTRE_BASE_URL,
     fetchAllServeurs,
     findActiveServerForServeurId,
     findServeurById,
@@ -42,7 +44,11 @@ const STRINGS = {
         fieldVersion: "Version",
         fieldModpack: "Modpack",
         fieldStatus: "État",
+        fieldWebPage: "Page web",
+        fieldIp: "IP",
+        ipUnavailable: "Non accessible",
         modpackLink: (name: string, url: string) => `[${name}](${url})`,
+        webPageLink: (url: string) => `[Voir la page](${url})`,
         fieldPlayers: (online: number, max: number) => `Joueurs en ligne (${online}/${max})`,
         emptyValue: "—",
         statusNoContainer: "Non démarrable",
@@ -99,6 +105,9 @@ export default {
             return;
         }
 
+        const active = await findActiveServerForServeurId(target.id);
+        const ipValue = active?.host ? `\`${active.host}\`` : STRINGS.embed.ipUnavailable;
+
         const embed = new EmbedBuilder()
             .setTitle(STRINGS.embed.title(target.nom))
             .setColor(parseColor(target.embed_color) ?? DEFAULT_EMBED_COLOR)
@@ -107,6 +116,8 @@ export default {
                 { name: STRINGS.embed.fieldGame, value: target.jeu || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: formatModpack(target.modpack, target.modpack_url), inline: true },
+                { name: STRINGS.embed.fieldIp, value: ipValue, inline: true },
+                { name: STRINGS.embed.fieldWebPage, value: STRINGS.embed.webPageLink(buildWebPageUrl(target.jeu, target.nom)), inline: true },
             );
 
         if (target.description && target.description !== "NA") {
@@ -139,13 +150,35 @@ export default {
 
         // ─── Players via RCON (only for running Minecraft servers) ──────
         if (isRunning) {
-            const playersField = await buildPlayersField(target.id, target.jeu);
+            const playersField = await buildPlayersField(active, target.jeu);
             embed.addFields(playersField);
         }
 
         await interaction.editReply({ embeds: [embed] });
     },
 };
+
+/**
+ * Slugifies a string for use in URLs: lowercases, strips accents, replaces
+ * runs of non-alphanumerics with a single underscore, trims edges.
+ * "La Vanilla" → "la_vanilla", "Cobblemon Loutre Monde S2" → "cobblemon_loutre_monde_s2".
+ */
+function slugify(input: string): string {
+    return input
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+
+/**
+ * Builds the antredesloutres.fr page URL for a given server, of the form:
+ *   <ANTRE_BASE_URL>/serveurs/<jeu>/<nom>/
+ */
+function buildWebPageUrl(jeu: string, nom: string): string {
+    return `${ANTRE_BASE_URL}/serveurs/${slugify(jeu)}/${slugify(nom)}/`;
+}
 
 /**
  * Renders the modpack field value. When a usable URL is provided, wraps the
@@ -163,14 +196,13 @@ function formatModpack(name: string, rawUrl: string): string {
  * just push it to the embed.
  */
 async function buildPlayersField(
-    serveurId: number,
+    active: ActiveServer | undefined,
     jeu: string,
 ): Promise<{ name: string; value: string }> {
     if (jeu !== MINECRAFT_GAME) {
         return { name: STRINGS.embed.fieldPlayers(0, 0), value: STRINGS.embed.playersNotMinecraft };
     }
 
-    const active = await findActiveServerForServeurId(serveurId);
     const password = process.env.RCON_PASSWORD;
     const port = active ? parseInt(active.rcon_port || "0", 10) : 0;
 
