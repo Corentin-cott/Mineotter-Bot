@@ -1,0 +1,17 @@
+services:
+  mineotter:
+    build: .
+    image: mineotter:latest
+    container_name: mineotter
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DOCKER_HOST: tcp://docker_proxy-discord_bots:2375
+    networks:
+      - discord-bots-net
+
+networks:
+  discord-bots-net:
+    name: discord-bots-net
+    external: true
