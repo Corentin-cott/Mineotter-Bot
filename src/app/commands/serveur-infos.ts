@@ -17,6 +17,7 @@ import {
     isStartable,
     parseColor,
     parseMinecraftPlayerList,
+    resolveImageUrl,
 } from "../utils/serverHelper";
 
 const STRINGS = {
@@ -29,7 +30,7 @@ const STRINGS = {
         description: "Le serveur dont on veut les informations",
     },
     replies: {
-        doesNotExist: (id: number) =>
+        doesNotExist: (id: string) =>
             `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
     },
     logs: {
@@ -95,7 +96,7 @@ export default {
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = parseInt(interaction.options.getString(STRINGS.option.name, true), 10);
+        const serverId = interaction.options.getString(STRINGS.option.name, true);
 
         await interaction.deferReply();
 
@@ -111,6 +112,7 @@ export default {
         const embed = new EmbedBuilder()
             .setTitle(STRINGS.embed.title(target.name))
             .setColor(parseColor(target.embed_color) ?? DEFAULT_EMBED_COLOR)
+            .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .setTimestamp()
             .addFields(
                 { name: STRINGS.embed.fieldGame, value: target.type || STRINGS.embed.emptyValue, inline: true },

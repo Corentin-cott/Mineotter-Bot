@@ -13,6 +13,7 @@ import {
     findServeurById,
     isStartable,
     parseColor,
+    resolveImageUrl,
 } from "../utils/serverHelper";
 
 const STRINGS = {
@@ -25,7 +26,7 @@ const STRINGS = {
         description: "Le serveur à démarrer",
     },
     replies: {
-        doesNotExist: (id: number) => `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
+        doesNotExist: (id: string) => `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
         noContainer: (name: string) => `Le serveur **${name}** n'est pas démarrable. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${name}\``,
         inspectFailed: (container: string) =>
             `Impossible d'inspecter le serveur. Merci de contactez un administrateur et donnez-lui le code suivant : \`500-${container}\``,
@@ -85,7 +86,7 @@ export default {
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = parseInt(interaction.options.getString(STRINGS.option.name, true), 10);
+        const serverId = interaction.options.getString(STRINGS.option.name, true);
 
         await interaction.deferReply();
 
@@ -131,6 +132,7 @@ export default {
         const embed = new EmbedBuilder()
             .setTitle(STRINGS.embed.title(target.name))
             .setDescription(STRINGS.embed.description(target.contenair))
+            .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .addFields(
                 { name: STRINGS.embed.fieldGame, value: target.type, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },

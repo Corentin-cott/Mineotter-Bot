@@ -53,12 +53,16 @@ export function parseColor(hex: string | undefined): number | undefined {
  * Resolves a server image field into a fully-qualified URL.
  * - Absolute URLs (http/https) are returned as-is.
  * - Relative paths starting with "/" are prefixed with the Antre des Loutres base URL.
+ * - PocketBase filenames are resolved using PB_URL, collection 'servers', and record id.
  * - Anything else (empty, "NA", malformed) returns undefined.
  */
-export function resolveImageUrl(image: string | undefined): string | undefined {
-    if (!image) return undefined;
+export function resolveImageUrl(image: string | undefined, recordId?: string): string | undefined {
+    if (!image || image === "NA") return undefined;
     if (/^https?:\/\//i.test(image)) return image;
     if (image.startsWith("/")) return `${ANTRE_BASE_URL}${image}`;
+    if (process.env.PB_URL && recordId && !image.includes("/")) {
+        return `${process.env.PB_URL}/api/files/servers/${recordId}/${image}`;
+    }
     return undefined;
 }
 
@@ -76,7 +80,7 @@ export async function fetchAllServeurs(): Promise<Server[]> {
  * Fetches the server list and returns the one matching `id`,
  * or undefined if not found.
  */
-export async function findServeurById(id: number): Promise<Server | undefined> {
+export async function findServeurById(id: string): Promise<Server | undefined> {
     const servers = await fetchAllServeurs();
     return servers.find(s => s.id === id);
 }
@@ -87,11 +91,11 @@ export async function findServeurById(id: number): Promise<Server | undefined> {
  * or undefined if not found.
  */
 export async function findActiveServerForServeurId(
-    serveurId: number,
+    serveurId: string,
 ): Promise<ActiveServer | undefined> {
     const active = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
     if (!Array.isArray(active)) return undefined;
-    return active.find(s => s.serveurs_id === serveurId);
+    return active.find(s => s.serveurs_id.toString() === serveurId);
 }
 
 /**
