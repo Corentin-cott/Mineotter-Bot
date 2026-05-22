@@ -1,0 +1,4 @@
+aliases:
+  - alias: "get_servers"
+    collection: "servers"
+    action: "getFullList"

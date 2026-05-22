@@ -84,10 +84,10 @@ export default {
         const servers = await fetchAllServeurs();
 
         const choices = servers
-            .filter(s => s.nom.toLowerCase().includes(focused))
+            .filter(s => s.name.toLowerCase().includes(focused))
             .slice(0, AUTOCOMPLETE_LIMIT)
             .map(s => ({
-                name: STRINGS.autocompleteLabel(s.nom, s.jeu),
+                name: STRINGS.autocompleteLabel(s.name, s.type),
                 value: s.id.toString(),
             }));
 
@@ -109,15 +109,15 @@ export default {
         const ipValue = active?.host ? `\`${active.host}\`` : STRINGS.embed.ipUnavailable;
 
         const embed = new EmbedBuilder()
-            .setTitle(STRINGS.embed.title(target.nom))
+            .setTitle(STRINGS.embed.title(target.name))
             .setColor(parseColor(target.embed_color) ?? DEFAULT_EMBED_COLOR)
             .setTimestamp()
             .addFields(
-                { name: STRINGS.embed.fieldGame, value: target.jeu || STRINGS.embed.emptyValue, inline: true },
+                { name: STRINGS.embed.fieldGame, value: target.type || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: formatModpack(target.modpack, target.modpack_url), inline: true },
                 { name: STRINGS.embed.fieldIp, value: ipValue, inline: true },
-                { name: STRINGS.embed.fieldWebPage, value: STRINGS.embed.webPageLink(buildWebPageUrl(target.jeu, target.nom)), inline: true },
+                { name: STRINGS.embed.fieldWebPage, value: STRINGS.embed.webPageLink(buildWebPageUrl(target.type, target.name)), inline: true },
             );
 
         if (target.description && target.description !== "NA") {
@@ -133,7 +133,7 @@ export default {
             embed.addFields({ name: STRINGS.embed.fieldStatus, value: STRINGS.embed.statusNoContainer, inline: true });
         } else {
             try {
-                const info = await docker.getContainer(target.contenaire).inspect();
+                const info = await docker.getContainer(target.contenair).inspect();
                 isRunning = info.State.Running;
                 embed.addFields({
                     name: STRINGS.embed.fieldStatus,
@@ -143,14 +143,14 @@ export default {
                     inline: true,
                 });
             } catch (err) {
-                otterlogs.error(STRINGS.logs.inspectFailed(target.contenaire, err));
+                otterlogs.error(STRINGS.logs.inspectFailed(target.contenair, err));
                 embed.addFields({ name: STRINGS.embed.fieldStatus, value: STRINGS.embed.statusUnknown, inline: true });
             }
         }
 
         // ─── Players via RCON (only for running Minecraft servers) ──────
         if (isRunning) {
-            const playersField = await buildPlayersField(active, target.jeu);
+            const playersField = await buildPlayersField(active, target.type);
             embed.addFields(playersField);
         }
 

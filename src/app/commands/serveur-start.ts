@@ -74,10 +74,10 @@ export default {
 
         const choices = servers
             .filter(isStartable)
-            .filter(s => s.nom.toLowerCase().includes(focused))
+            .filter(s => s.name.toLowerCase().includes(focused))
             .slice(0, AUTOCOMPLETE_LIMIT)
             .map(s => ({
-                name: STRINGS.autocompleteLabel(s.nom, s.jeu),
+                name: STRINGS.autocompleteLabel(s.name, s.type),
                 value: s.id.toString(),
             }));
 
@@ -97,42 +97,42 @@ export default {
         }
 
         if (!isStartable(target)) {
-            await interaction.editReply(STRINGS.replies.noContainer(target.nom));
+            await interaction.editReply(STRINGS.replies.noContainer(target.name));
             return;
         }
 
-        const container = docker.getContainer(target.contenaire);
+        const container = docker.getContainer(target.contenair);
 
         let running: boolean;
         try {
             const info = await container.inspect();
             running = info.State.Running;
         } catch (err) {
-            otterlogs.error(STRINGS.logs.inspectFailed(target.contenaire, err));
-            await interaction.editReply(STRINGS.replies.inspectFailed(target.contenaire));
+            otterlogs.error(STRINGS.logs.inspectFailed(target.contenair, err));
+            await interaction.editReply(STRINGS.replies.inspectFailed(target.contenair));
             return;
         }
 
         if (running) {
-            await interaction.editReply(STRINGS.replies.alreadyRunning(target.nom));
+            await interaction.editReply(STRINGS.replies.alreadyRunning(target.name));
             return;
         }
 
         try {
             await container.start();
         } catch (err) {
-            otterlogs.error(STRINGS.logs.startFailed(target.contenaire, err));
-            await interaction.editReply(STRINGS.replies.startFailed(target.contenaire));
+            otterlogs.error(STRINGS.logs.startFailed(target.contenair, err));
+            await interaction.editReply(STRINGS.replies.startFailed(target.contenair));
             return;
         }
 
-        otterlogs.success(STRINGS.logs.started(target.contenaire, interaction.user.tag));
+        otterlogs.success(STRINGS.logs.started(target.contenair, interaction.user.tag));
 
         const embed = new EmbedBuilder()
-            .setTitle(STRINGS.embed.title(target.nom))
-            .setDescription(STRINGS.embed.description(target.contenaire))
+            .setTitle(STRINGS.embed.title(target.name))
+            .setDescription(STRINGS.embed.description(target.contenair))
             .addFields(
-                { name: STRINGS.embed.fieldGame, value: target.jeu, inline: true },
+                { name: STRINGS.embed.fieldGame, value: target.type, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: target.modpack || STRINGS.embed.emptyValue, inline: true },
             )
