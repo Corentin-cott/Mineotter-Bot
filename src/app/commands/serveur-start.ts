@@ -11,6 +11,7 @@ import { applyBotBranding } from "../utils/embedBranding";
 import {
     fetchAllServeurs,
     findServeurById,
+    getServerGame,
     isStartable,
     parseColor,
     resolveImageUrl,
@@ -78,7 +79,7 @@ export default {
             .filter(s => s.name.toLowerCase().includes(focused))
             .slice(0, AUTOCOMPLETE_LIMIT)
             .map(s => ({
-                name: STRINGS.autocompleteLabel(s.name, s.type),
+                name: STRINGS.autocompleteLabel(s.name, getServerGame(s)),
                 value: s.id.toString(),
             }));
 
@@ -102,15 +103,15 @@ export default {
             return;
         }
 
-        const container = docker.getContainer(target.contenair);
+        const container = docker.getContainer(target.container);
 
         let running: boolean;
         try {
             const info = await container.inspect();
             running = info.State.Running;
         } catch (err) {
-            otterlogs.error(STRINGS.logs.inspectFailed(target.contenair, err));
-            await interaction.editReply(STRINGS.replies.inspectFailed(target.contenair));
+            otterlogs.error(STRINGS.logs.inspectFailed(target.container, err));
+            await interaction.editReply(STRINGS.replies.inspectFailed(target.container));
             return;
         }
 
@@ -122,19 +123,19 @@ export default {
         try {
             await container.start();
         } catch (err) {
-            otterlogs.error(STRINGS.logs.startFailed(target.contenair, err));
-            await interaction.editReply(STRINGS.replies.startFailed(target.contenair));
+            otterlogs.error(STRINGS.logs.startFailed(target.container, err));
+            await interaction.editReply(STRINGS.replies.startFailed(target.container));
             return;
         }
 
-        otterlogs.success(STRINGS.logs.started(target.contenair, interaction.user.tag));
+        otterlogs.success(STRINGS.logs.started(target.container, interaction.user.tag));
 
         const embed = new EmbedBuilder()
             .setTitle(STRINGS.embed.title(target.name))
-            .setDescription(STRINGS.embed.description(target.contenair))
+            .setDescription(STRINGS.embed.description(target.container))
             .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .addFields(
-                { name: STRINGS.embed.fieldGame, value: target.type, inline: true },
+                { name: STRINGS.embed.fieldGame, value: getServerGame(target) || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: target.modpack || STRINGS.embed.emptyValue, inline: true },
             )

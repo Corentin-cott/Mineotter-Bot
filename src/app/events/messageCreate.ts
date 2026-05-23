@@ -1,6 +1,7 @@
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { getSalonByAlias } from "../../otterbots/utils/salon";
-import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
+import { OtterPocketBase } from "../../otterbots/utils/pocketbase/pocketbase";
+import { ACTIVE_SERVERS_ALIAS } from "../utils/serverHelper";
 import { rconHelper } from "../utils/rconHelper";
 import { cleanUserMessage } from "../utils/discordMessageCleaner";
 import { RconConfig } from "../types/rconTypes";
@@ -32,23 +33,16 @@ module.exports = {
             const command: string = `/tellraw @a ${JSON.stringify(tellrawObject)}`;
 
             try {
-                // GET request to the API
-                const response = await Otterlyapi.getDataByAlias<ApiResponse>('otr-serveurs-primaire-secondaire');
+                // Fetch active servers (RCON targets) from PocketBase
+                const response = await OtterPocketBase.execByAlias<ApiResponse>(ACTIVE_SERVERS_ALIAS);
                 otterlogs.debug(`API Response: ${JSON.stringify(response)}`);
 
                 if (response && Array.isArray(response)) {
-                    const rconPassword = process.env.RCON_PASSWORD;
-                    if (!rconPassword) {
-                        otterlogs.error("RCON_PASSWORD is not set in environment variables.");
-                        return;
-                    }
-
-                    // CHANGE: Iterate over 'response', not 'response.data'
                     await Promise.all(response.map(async (server) => {
                         const rcon: RconConfig = {
                             host: server.rcon_host,
                             port: parseInt(server.rcon_port),
-                            password: rconPassword,
+                            password: server.rcon_password,
                             timeout: 5000
                         };
 

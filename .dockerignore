@@ -14,7 +14,6 @@ build
 
 # Runtime state — bind-mounted from the host at deploy time
 channels.json
-otterlyApiRoutes.json
 
 # IDE & editor
 .idea

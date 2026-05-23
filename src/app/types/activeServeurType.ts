@@ -1,6 +1,6 @@
 export type ActiveServer = {
-    id: number;
-    serveurs_id: number;
+    id: string;
+    server: string;
     host: string;
     rcon_host: string;
     rcon_port: string;
