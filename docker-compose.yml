@@ -15,6 +15,7 @@ services:
       - mineotter_bridge
       - discord-bots-net
       - games-net
+      - pocketbase_network
 
 networks:
   mineotter_bridge:
@@ -24,4 +25,7 @@ networks:
     external: true
   games-net:
     name: server-net
+    external: true
+  pocketbase_network:
+    name: pocketbase_network
     external: true
