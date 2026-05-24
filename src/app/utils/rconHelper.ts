@@ -2,6 +2,8 @@ import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { Rcon } from "rcon-client";
 import { RconConfig } from "../types/rconTypes"
 
+export const RCON_TIMEOUT_MS = 5000;
+
 export const rconHelper = {
     /**
      * Connects to a Minecraft server via RCON, runs a command, returns the response.

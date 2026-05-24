@@ -1,0 +1,12 @@
+aliases:
+  - alias: "get_servers"
+    collection: "servers"
+    action: "getFullList"
+    options:
+      expand: "platform"
+      requestKey: null
+  - alias: "get_active_servers"
+    collection: "active_servers"
+    action: "getFullList"
+    options:
+      requestKey: null

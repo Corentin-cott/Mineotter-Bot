@@ -11,11 +11,11 @@ services:
       DOCKER_HOST: tcp://docker_proxy-discord_bots:2375
     volumes:
       - ./channels.json:/app/channels.json
-      - ./otterlyApiRoutes.json:/app/otterlyApiRoutes.json
     networks:
       - mineotter_bridge
       - discord-bots-net
       - games-net
+      - pocketbase_network
 
 networks:
   mineotter_bridge:
@@ -25,4 +25,7 @@ networks:
     external: true
   games-net:
     name: server-net
+    external: true
+  pocketbase_network:
+    name: pocketbase_network
     external: true

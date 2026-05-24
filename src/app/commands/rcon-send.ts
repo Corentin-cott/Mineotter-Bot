@@ -1,10 +1,7 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
-import { rconHelper } from "../utils/rconHelper";
+import { AUTOCOMPLETE_LIMIT, fetchAllActiveServers } from "../utils/serverHelper";
+import { rconHelper, RCON_TIMEOUT_MS } from "../utils/rconHelper";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
-import { ActiveServer } from "../types/activeServeurType";
-
-const ACTIVE_SERVERS_ALIAS = "otr-serveurs-primaire-secondaire";
 
 export default {
     data: new SlashCommandBuilder()
@@ -24,17 +21,12 @@ export default {
 
     async autocomplete(interaction: AutocompleteInteraction) {
         const focused = interaction.options.getFocused().toLowerCase();
-        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-
-        if (!Array.isArray(servers)) {
-            await interaction.respond([]);
-            return;
-        }
+        const servers = await fetchAllActiveServers();
 
         const choices = servers
             .filter(s => s.host?.toLowerCase().includes(focused))
-            .slice(0, 25)
-            .map(s => ({ name: s.host || "Unknown", value: s.id.toString() }));
+            .slice(0, AUTOCOMPLETE_LIMIT)
+            .map(s => ({ name: s.host || "Unknown", value: s.id }));
 
         await interaction.respond(choices);
     },
@@ -51,15 +43,8 @@ export default {
             return;
         }
 
-        const password = process.env.RCON_PASSWORD;
-        if (!password) {
-            otterlogs.error("RCON_PASSWORD is not set in environment variables.");
-            await interaction.editReply("RCON_PASSWORD n'est pas défini dans les variables d'environnement.");
-            return;
-        }
-
-        const servers = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-        const target = servers?.find(s => s.id === parseInt(serverId));
+        const servers = await fetchAllActiveServers();
+        const target = servers.find(s => s.id === serverId);
         if (!target) {
             otterlogs.error(`Server '${serverId}' not found.`);
             await interaction.editReply(`Serveur '${serverId}' introuvable.`);
@@ -73,7 +58,7 @@ export default {
         }
 
         const response = await rconHelper.sendCommand(
-            { host: target.rcon_host, port, password, timeout: 5000 },
+            { host: target.rcon_host, port, password: target.rcon_password, timeout: RCON_TIMEOUT_MS },
             command
         );
 

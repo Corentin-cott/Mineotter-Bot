@@ -7,16 +7,20 @@ import {
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
 import { applyBotBranding } from "../utils/embedBranding";
-import { rconHelper } from "../utils/rconHelper";
+import { rconHelper, RCON_TIMEOUT_MS } from "../utils/rconHelper";
 import { ActiveServer } from "../types/activeServeurType";
 import {
     ANTRE_BASE_URL,
+    buildServerChoices,
+    DEFAULT_EMBED_COLOR,
     fetchAllServeurs,
     findActiveServerForServeurId,
     findServeurById,
+    getServerGame,
     isStartable,
     parseColor,
     parseMinecraftPlayerList,
+    resolveImageUrl,
 } from "../utils/serverHelper";
 
 const STRINGS = {
@@ -29,7 +33,7 @@ const STRINGS = {
         description: "Le serveur dont on veut les informations",
     },
     replies: {
-        doesNotExist: (id: number) =>
+        doesNotExist: (id: string) =>
             `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
     },
     logs: {
@@ -60,13 +64,9 @@ const STRINGS = {
         playersNoRconConfig: "Pas de configuration RCON pour ce serveur.",
         playersNotMinecraft: "Liste des joueurs non disponible pour ce jeu via RCON.",
     },
-    autocompleteLabel: (name: string, game: string) => `${name} (${game})`,
 } as const;
 
-const DEFAULT_EMBED_COLOR = 0x57F287;
-const AUTOCOMPLETE_LIMIT = 25;
 const MINECRAFT_GAME = "Minecraft";
-const RCON_TIMEOUT_MS = 5000;
 
 export default {
     data: new SlashCommandBuilder()
@@ -80,22 +80,12 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const focused = interaction.options.getFocused().toLowerCase();
         const servers = await fetchAllServeurs();
-
-        const choices = servers
-            .filter(s => s.nom.toLowerCase().includes(focused))
-            .slice(0, AUTOCOMPLETE_LIMIT)
-            .map(s => ({
-                name: STRINGS.autocompleteLabel(s.nom, s.jeu),
-                value: s.id.toString(),
-            }));
-
-        await interaction.respond(choices);
+        await interaction.respond(buildServerChoices(servers, interaction.options.getFocused()));
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = parseInt(interaction.options.getString(STRINGS.option.name, true), 10);
+        const serverId = interaction.options.getString(STRINGS.option.name, true);
 
         await interaction.deferReply();
 
@@ -106,18 +96,20 @@ export default {
         }
 
         const active = await findActiveServerForServeurId(target.id);
+        const game = getServerGame(target);
         const ipValue = active?.host ? `\`${active.host}\`` : STRINGS.embed.ipUnavailable;
 
         const embed = new EmbedBuilder()
-            .setTitle(STRINGS.embed.title(target.nom))
+            .setTitle(STRINGS.embed.title(target.name))
             .setColor(parseColor(target.embed_color) ?? DEFAULT_EMBED_COLOR)
+            .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .setTimestamp()
             .addFields(
-                { name: STRINGS.embed.fieldGame, value: target.jeu || STRINGS.embed.emptyValue, inline: true },
+                { name: STRINGS.embed.fieldGame, value: game || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: formatModpack(target.modpack, target.modpack_url), inline: true },
                 { name: STRINGS.embed.fieldIp, value: ipValue, inline: true },
-                { name: STRINGS.embed.fieldWebPage, value: STRINGS.embed.webPageLink(buildWebPageUrl(target.jeu, target.nom)), inline: true },
+                { name: STRINGS.embed.fieldWebPage, value: STRINGS.embed.webPageLink(buildWebPageUrl(game, target.name)), inline: true },
             );
 
         if (target.description && target.description !== "NA") {
@@ -133,7 +125,7 @@ export default {
             embed.addFields({ name: STRINGS.embed.fieldStatus, value: STRINGS.embed.statusNoContainer, inline: true });
         } else {
             try {
-                const info = await docker.getContainer(target.contenaire).inspect();
+                const info = await docker.getContainer(target.container).inspect();
                 isRunning = info.State.Running;
                 embed.addFields({
                     name: STRINGS.embed.fieldStatus,
@@ -143,14 +135,14 @@ export default {
                     inline: true,
                 });
             } catch (err) {
-                otterlogs.error(STRINGS.logs.inspectFailed(target.contenaire, err));
+                otterlogs.error(STRINGS.logs.inspectFailed(target.container, err));
                 embed.addFields({ name: STRINGS.embed.fieldStatus, value: STRINGS.embed.statusUnknown, inline: true });
             }
         }
 
         // ─── Players via RCON (only for running Minecraft servers) ──────
         if (isRunning) {
-            const playersField = await buildPlayersField(active, target.jeu);
+            const playersField = await buildPlayersField(active, game);
             embed.addFields(playersField);
         }
 
@@ -199,21 +191,20 @@ async function buildPlayersField(
     active: ActiveServer | undefined,
     jeu: string,
 ): Promise<{ name: string; value: string }> {
-    if (jeu !== MINECRAFT_GAME) {
+    if (jeu.toLowerCase() !== MINECRAFT_GAME.toLowerCase()) {
         return { name: STRINGS.embed.fieldPlayers(0, 0), value: STRINGS.embed.playersNotMinecraft };
     }
 
-    const password = process.env.RCON_PASSWORD;
     const port = active ? parseInt(active.rcon_port || "0", 10) : 0;
 
-    if (!active || !active.rcon_host || !port || !password) {
+    if (!active || !active.rcon_host || !port) {
         return { name: STRINGS.embed.fieldPlayers(0, 0), value: STRINGS.embed.playersNoRconConfig };
     }
 
     let raw: string | null;
     try {
         raw = await rconHelper.sendCommand(
-            { host: active.rcon_host, port, password, timeout: RCON_TIMEOUT_MS },
+            { host: active.rcon_host, port, password: active.rcon_password, timeout: RCON_TIMEOUT_MS },
             "list",
         );
     } catch (err) {

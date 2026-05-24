@@ -5,9 +5,11 @@
 /build
 .env
 channels.json
-otterlyApiRoutes.json
 
 # ide & ia
 .idea
 .vscode
 .claude
+
+# otterbots
+/src/Otterbots

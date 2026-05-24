@@ -9,10 +9,14 @@ import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
 import { applyBotBranding } from "../utils/embedBranding";
 import {
+    buildServerChoices,
+    DEFAULT_EMBED_COLOR,
     fetchAllServeurs,
     findServeurById,
+    getServerGame,
     isStartable,
     parseColor,
+    resolveImageUrl,
 } from "../utils/serverHelper";
 
 const STRINGS = {
@@ -25,7 +29,7 @@ const STRINGS = {
         description: "Le serveur à démarrer",
     },
     replies: {
-        doesNotExist: (id: number) => `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
+        doesNotExist: (id: string) => `Le serveur \`${id}\` n'existe pas. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${id}\``,
         noContainer: (name: string) => `Le serveur **${name}** n'est pas démarrable. Merci de contacter un administrateur et de lui donner le code suivant : \`404-${name}\``,
         inspectFailed: (container: string) =>
             `Impossible d'inspecter le serveur. Merci de contactez un administrateur et donnez-lui le code suivant : \`500-${container}\``,
@@ -50,11 +54,7 @@ const STRINGS = {
         fieldModpack: "Modpack",
         emptyValue: "—",
     },
-    autocompleteLabel: (name: string, game: string) => `${name} (${game})`,
 } as const;
-
-const DEFAULT_EMBED_COLOR = 0x57F287;
-const AUTOCOMPLETE_LIMIT = 25;
 
 export default {
     data: new SlashCommandBuilder()
@@ -69,23 +69,13 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const focused = interaction.options.getFocused().toLowerCase();
         const servers = await fetchAllServeurs();
-
-        const choices = servers
-            .filter(isStartable)
-            .filter(s => s.nom.toLowerCase().includes(focused))
-            .slice(0, AUTOCOMPLETE_LIMIT)
-            .map(s => ({
-                name: STRINGS.autocompleteLabel(s.nom, s.jeu),
-                value: s.id.toString(),
-            }));
-
-        await interaction.respond(choices);
+        const startable = servers.filter(isStartable);
+        await interaction.respond(buildServerChoices(startable, interaction.options.getFocused()));
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = parseInt(interaction.options.getString(STRINGS.option.name, true), 10);
+        const serverId = interaction.options.getString(STRINGS.option.name, true);
 
         await interaction.deferReply();
 
@@ -97,42 +87,43 @@ export default {
         }
 
         if (!isStartable(target)) {
-            await interaction.editReply(STRINGS.replies.noContainer(target.nom));
+            await interaction.editReply(STRINGS.replies.noContainer(target.name));
             return;
         }
 
-        const container = docker.getContainer(target.contenaire);
+        const container = docker.getContainer(target.container);
 
         let running: boolean;
         try {
             const info = await container.inspect();
             running = info.State.Running;
         } catch (err) {
-            otterlogs.error(STRINGS.logs.inspectFailed(target.contenaire, err));
-            await interaction.editReply(STRINGS.replies.inspectFailed(target.contenaire));
+            otterlogs.error(STRINGS.logs.inspectFailed(target.container, err));
+            await interaction.editReply(STRINGS.replies.inspectFailed(target.container));
             return;
         }
 
         if (running) {
-            await interaction.editReply(STRINGS.replies.alreadyRunning(target.nom));
+            await interaction.editReply(STRINGS.replies.alreadyRunning(target.name));
             return;
         }
 
         try {
             await container.start();
         } catch (err) {
-            otterlogs.error(STRINGS.logs.startFailed(target.contenaire, err));
-            await interaction.editReply(STRINGS.replies.startFailed(target.contenaire));
+            otterlogs.error(STRINGS.logs.startFailed(target.container, err));
+            await interaction.editReply(STRINGS.replies.startFailed(target.container));
             return;
         }
 
-        otterlogs.success(STRINGS.logs.started(target.contenaire, interaction.user.tag));
+        otterlogs.success(STRINGS.logs.started(target.container, interaction.user.tag));
 
         const embed = new EmbedBuilder()
-            .setTitle(STRINGS.embed.title(target.nom))
-            .setDescription(STRINGS.embed.description(target.contenaire))
+            .setTitle(STRINGS.embed.title(target.name))
+            .setDescription(STRINGS.embed.description(target.name))
+            .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .addFields(
-                { name: STRINGS.embed.fieldGame, value: target.jeu, inline: true },
+                { name: STRINGS.embed.fieldGame, value: getServerGame(target) || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldVersion, value: target.version || STRINGS.embed.emptyValue, inline: true },
                 { name: STRINGS.embed.fieldModpack, value: target.modpack || STRINGS.embed.emptyValue, inline: true },
             )

@@ -1,4 +1,4 @@
-import {SalonCategory, SalonType} from "../../otterbots/type/salonType";
+import {SalonCategory, SalonType} from "../../otterbots/types/salonType";
 
 const MINECRAFT_ROLE_ID = "1112714361111335032";
 

@@ -1,12 +1,15 @@
-import { Otterlyapi } from "../../otterbots/utils/otterlyapi/otterlyapi";
-import { Serveur } from "../types/serveurType";
+import { OtterPocketBase } from "../../otterbots/utils/pocketbase/pocketbase";
+import { otterlogs } from "../../otterbots/utils/otterlogs";
+import { Server } from "../types/serverType";
 import { ActiveServer } from "../types/activeServeurType";
 
-export const SERVEURS_ALIAS = "otr-serveurs";
-export const ACTIVE_SERVERS_ALIAS = "otr-serveurs-primaire-secondaire";
+export const SERVEURS_ALIAS = "get_servers";
+export const ACTIVE_SERVERS_ALIAS = "get_active_servers";
 export const DEPRECATED_MARKER = "depreciated";
 export const ANTRE_BASE_URL = "https://antredesloutres.fr";
 export const MANAGED_GAMES_WILDCARD = "*";
+export const AUTOCOMPLETE_LIMIT = 25;
+export const DEFAULT_EMBED_COLOR = 0x57F287;
 
 /**
  * Returns the list of games this bot manages, parsed from GAMES_MANAGED env.
@@ -20,21 +23,30 @@ function getManagedGames(): typeof MANAGED_GAMES_WILDCARD | string[] {
 }
 
 /**
+ * Returns the server's game name, read from the expanded `platform` relation.
+ * Empty string when the relation isn't expanded or has no name.
+ */
+export function getServerGame(s: Server): string {
+    return s.expand?.platform?.name ?? "";
+}
+
+/**
  * Tells whether the bot is allowed to handle a server based on its game,
  * driven by the GAMES_MANAGED environment variable.
  */
-export function isGameManaged(s: Serveur): boolean {
+export function isGameManaged(s: Server): boolean {
     const managed = getManagedGames();
     if (managed === MANAGED_GAMES_WILDCARD) return true;
-    return managed.includes(s.jeu.toLowerCase());
+    const game = getServerGame(s);
+    return !!game && managed.includes(game.toLowerCase());
 }
 
 /**
  * A server is startable if it has a real Docker container associated
- * (not empty, not flagged as deprecated in Otterlyapi).
+ * (not empty, not flagged as deprecated).
  */
-export function isStartable(s: Serveur): boolean {
-    return !!s.contenaire && s.contenaire !== DEPRECATED_MARKER;
+export function isStartable(s: Server): boolean {
+    return !!s.container && s.container !== DEPRECATED_MARKER;
 }
 
 /**
@@ -52,45 +64,86 @@ export function parseColor(hex: string | undefined): number | undefined {
  * Resolves a server image field into a fully-qualified URL.
  * - Absolute URLs (http/https) are returned as-is.
  * - Relative paths starting with "/" are prefixed with the Antre des Loutres base URL.
+ * - PocketBase filenames are resolved using PB_URL, collection 'servers', and record id.
  * - Anything else (empty, "NA", malformed) returns undefined.
  */
-export function resolveImageUrl(image: string | undefined): string | undefined {
-    if (!image) return undefined;
+export function resolveImageUrl(image: string | undefined, recordId?: string): string | undefined {
+    if (!image || image === "NA") return undefined;
     if (/^https?:\/\//i.test(image)) return image;
     if (image.startsWith("/")) return `${ANTRE_BASE_URL}${image}`;
+    if (process.env.PB_URL && recordId && !image.includes("/")) {
+        return `${process.env.PB_URL}/api/files/servers/${recordId}/${image}`;
+    }
     return undefined;
 }
 
 /**
- * Fetches the server list from Otterlyapi and keeps only the games this bot
+ * Fetches the server list from PocketBase and keeps only the games this bot
  * is allowed to manage (per GAMES_MANAGED env). Returns an empty array on
  * failure or when no data is returned.
  */
-export async function fetchAllServeurs(): Promise<Serveur[]> {
-    const data = await Otterlyapi.getDataByAlias<Serveur[]>(SERVEURS_ALIAS);
-    return Array.isArray(data) ? data.filter(isGameManaged) : [];
+export async function fetchAllServeurs(): Promise<Server[]> {
+    const data = await OtterPocketBase.execByAlias<Server[]>(SERVEURS_ALIAS);
+
+    if (!Array.isArray(data)) {
+        otterlogs.warn(`fetchAllServeurs: PocketBase did not return an array for "${SERVEURS_ALIAS}" (got: ${typeof data}). Check PB_URL and the List/View API rule of the "servers" collection.`);
+        return [];
+    }
+
+    const filtered = data.filter(isGameManaged);
+
+    if (data.length === 0) {
+        otterlogs.warn(`fetchAllServeurs: the "servers" collection is empty (PocketBase returned 0 records).`);
+    } else if (filtered.length === 0) {
+        const games = [...new Set(data.map(getServerGame))].join(", ");
+        otterlogs.warn(`fetchAllServeurs: all ${data.length} server(s) were filtered out by GAMES_MANAGED="${process.env.GAMES_MANAGED}". Games present in DB (platform.name): [${games}].`);
+    }
+
+    return filtered;
+}
+
+/**
+ * Builds the discord.js autocomplete choices for a server list: keeps servers
+ * whose name matches `focused`, caps the count, and labels each "Name (Game)".
+ */
+export function buildServerChoices(
+    servers: Server[],
+    focused: string,
+): { name: string; value: string }[] {
+    const query = focused.toLowerCase();
+    return servers
+        .filter(s => s.name.toLowerCase().includes(query))
+        .slice(0, AUTOCOMPLETE_LIMIT)
+        .map(s => ({ name: `${s.name} (${getServerGame(s)})`, value: s.id }));
 }
 
 /**
  * Fetches the server list and returns the one matching `id`,
  * or undefined if not found.
  */
-export async function findServeurById(id: number): Promise<Serveur | undefined> {
+export async function findServeurById(id: string): Promise<Server | undefined> {
     const servers = await fetchAllServeurs();
     return servers.find(s => s.id === id);
 }
 
 /**
- * Fetches the active-servers list (the one that carries RCON connection info)
- * and returns the entry whose `serveurs_id` matches the given Serveur id,
- * or undefined if not found.
+ * Fetches the active-servers list (the one that carries RCON connection info).
+ * Returns an empty array on failure or when no data is returned.
+ */
+export async function fetchAllActiveServers(): Promise<ActiveServer[]> {
+    const data = await OtterPocketBase.execByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
+    return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Returns the active-server entry whose `server` relation matches the given
+ * server id, or undefined if not found.
  */
 export async function findActiveServerForServeurId(
-    serveurId: number,
+    serverId: string,
 ): Promise<ActiveServer | undefined> {
-    const active = await Otterlyapi.getDataByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-    if (!Array.isArray(active)) return undefined;
-    return active.find(s => s.serveurs_id === serveurId);
+    const active = await fetchAllActiveServers();
+    return active.find(s => s.server === serverId);
 }
 
 /**
