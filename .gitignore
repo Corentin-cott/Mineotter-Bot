@@ -11,5 +11,6 @@ channels.json
 .vscode
 .claude
 
-# otterbots
-/src/Otterbots
+# otterbots (external framework, vendored at deploy/CI time)
+/src/otterbots
+.otterbots-tmp/

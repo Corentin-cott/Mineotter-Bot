@@ -15,6 +15,9 @@ build
 # Runtime state — bind-mounted from the host at deploy time
 channels.json
 
+# Temp clone of the Otterbots framework (vendored into src/otterbots before build)
+.otterbots-tmp
+
 # IDE & editor
 .idea
 .vscode
