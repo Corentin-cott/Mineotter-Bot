@@ -19,6 +19,7 @@
     "build": "tsc",
     "lint": "npx eslint \"src/**/*.ts\"",
     "start": "node ./build/app/index.js",
+    "register:guild": "npm run build && node ./register-guild-commands.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

@@ -39,5 +39,13 @@ export const botSalon: SalonType[] = [
         category: 1,
         type: 1,
         webhook: true
+    },
+    {
+        alias: "moderator-only",
+        name: "💥・moderator-only🛑",
+        role_id: MINECRAFT_ROLE_ID,
+        category: 1,
+        type: 1,
+        webhook: false
     }
 ];

@@ -34,11 +34,14 @@ export function getServerGame(s: Server): string {
  * Tells whether the bot is allowed to handle a server based on its game,
  * driven by the GAMES_MANAGED environment variable.
  */
-export function isGameManaged(s: Server): boolean {
+export function isManagedGameName(name: string | undefined): boolean {
     const managed = getManagedGames();
     if (managed === MANAGED_GAMES_WILDCARD) return true;
-    const game = getServerGame(s);
-    return !!game && managed.includes(game.toLowerCase());
+    return !!name && managed.includes(name.toLowerCase());
+}
+
+export function isGameManaged(s: Server): boolean {
+    return isManagedGameName(getServerGame(s));
 }
 
 /**

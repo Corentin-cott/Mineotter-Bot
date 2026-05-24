@@ -10,3 +10,8 @@ aliases:
     action: "getFullList"
     options:
       requestKey: null
+  - alias: "get_platforms"
+    collection: "platforms"
+    action: "getFullList"
+    options:
+      requestKey: null
