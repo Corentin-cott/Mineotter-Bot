@@ -8,6 +8,8 @@ export const ACTIVE_SERVERS_ALIAS = "get_active_servers";
 export const DEPRECATED_MARKER = "depreciated";
 export const ANTRE_BASE_URL = "https://antredesloutres.fr";
 export const MANAGED_GAMES_WILDCARD = "*";
+export const AUTOCOMPLETE_LIMIT = 25;
+export const DEFAULT_EMBED_COLOR = 0x57F287;
 
 /**
  * Returns the list of games this bot manages, parsed from GAMES_MANAGED env.
@@ -84,20 +86,35 @@ export async function fetchAllServeurs(): Promise<Server[]> {
     const data = await OtterPocketBase.execByAlias<Server[]>(SERVEURS_ALIAS);
 
     if (!Array.isArray(data)) {
-        otterlogs.warn(`fetchAllServeurs: PocketBase n'a pas renvoyé de tableau pour "${SERVEURS_ALIAS}" (reçu: ${typeof data}). Vérifie PB_URL et la règle d'API List/View de la collection "servers".`);
+        otterlogs.warn(`fetchAllServeurs: PocketBase did not return an array for "${SERVEURS_ALIAS}" (got: ${typeof data}). Check PB_URL and the List/View API rule of the "servers" collection.`);
         return [];
     }
 
     const filtered = data.filter(isGameManaged);
 
     if (data.length === 0) {
-        otterlogs.warn(`fetchAllServeurs: la collection "servers" est vide (0 enregistrement renvoyé par PocketBase).`);
+        otterlogs.warn(`fetchAllServeurs: the "servers" collection is empty (PocketBase returned 0 records).`);
     } else if (filtered.length === 0) {
         const games = [...new Set(data.map(getServerGame))].join(", ");
-        otterlogs.warn(`fetchAllServeurs: les ${data.length} serveur(s) ont tous été filtrés par GAMES_MANAGED="${process.env.GAMES_MANAGED}". Jeux présents en base (platform.name): [${games}].`);
+        otterlogs.warn(`fetchAllServeurs: all ${data.length} server(s) were filtered out by GAMES_MANAGED="${process.env.GAMES_MANAGED}". Games present in DB (platform.name): [${games}].`);
     }
 
     return filtered;
+}
+
+/**
+ * Builds the discord.js autocomplete choices for a server list: keeps servers
+ * whose name matches `focused`, caps the count, and labels each "Name (Game)".
+ */
+export function buildServerChoices(
+    servers: Server[],
+    focused: string,
+): { name: string; value: string }[] {
+    const query = focused.toLowerCase();
+    return servers
+        .filter(s => s.name.toLowerCase().includes(query))
+        .slice(0, AUTOCOMPLETE_LIMIT)
+        .map(s => ({ name: `${s.name} (${getServerGame(s)})`, value: s.id }));
 }
 
 /**
@@ -110,15 +127,22 @@ export async function findServeurById(id: string): Promise<Server | undefined> {
 }
 
 /**
- * Fetches the active-servers list (the one that carries RCON connection info)
- * and returns the entry whose `server` relation matches the given server id,
- * or undefined if not found.
+ * Fetches the active-servers list (the one that carries RCON connection info).
+ * Returns an empty array on failure or when no data is returned.
+ */
+export async function fetchAllActiveServers(): Promise<ActiveServer[]> {
+    const data = await OtterPocketBase.execByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
+    return Array.isArray(data) ? data : [];
+}
+
+/**
+ * Returns the active-server entry whose `server` relation matches the given
+ * server id, or undefined if not found.
  */
 export async function findActiveServerForServeurId(
     serverId: string,
 ): Promise<ActiveServer | undefined> {
-    const active = await OtterPocketBase.execByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-    if (!Array.isArray(active)) return undefined;
+    const active = await fetchAllActiveServers();
     return active.find(s => s.server === serverId);
 }
 

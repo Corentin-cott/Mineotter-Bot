@@ -9,6 +9,8 @@ import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
 import { applyBotBranding } from "../utils/embedBranding";
 import {
+    buildServerChoices,
+    DEFAULT_EMBED_COLOR,
     fetchAllServeurs,
     findServeurById,
     getServerGame,
@@ -52,11 +54,7 @@ const STRINGS = {
         fieldModpack: "Modpack",
         emptyValue: "—",
     },
-    autocompleteLabel: (name: string, game: string) => `${name} (${game})`,
 } as const;
-
-const DEFAULT_EMBED_COLOR = 0x57F287;
-const AUTOCOMPLETE_LIMIT = 25;
 
 export default {
     data: new SlashCommandBuilder()
@@ -71,19 +69,9 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const focused = interaction.options.getFocused().toLowerCase();
         const servers = await fetchAllServeurs();
-
-        const choices = servers
-            .filter(isStartable)
-            .filter(s => s.name.toLowerCase().includes(focused))
-            .slice(0, AUTOCOMPLETE_LIMIT)
-            .map(s => ({
-                name: STRINGS.autocompleteLabel(s.name, getServerGame(s)),
-                value: s.id.toString(),
-            }));
-
-        await interaction.respond(choices);
+        const startable = servers.filter(isStartable);
+        await interaction.respond(buildServerChoices(startable, interaction.options.getFocused()));
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -132,7 +120,7 @@ export default {
 
         const embed = new EmbedBuilder()
             .setTitle(STRINGS.embed.title(target.name))
-            .setDescription(STRINGS.embed.description(target.container))
+            .setDescription(STRINGS.embed.description(target.name))
             .setThumbnail(resolveImageUrl(target.image, target.id) ?? null)
             .addFields(
                 { name: STRINGS.embed.fieldGame, value: getServerGame(target) || STRINGS.embed.emptyValue, inline: true },

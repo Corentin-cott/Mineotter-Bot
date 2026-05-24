@@ -7,10 +7,12 @@ import {
 import { otterlogs } from "../../otterbots/utils/otterlogs";
 import { docker } from "../utils/dockerClient";
 import { applyBotBranding } from "../utils/embedBranding";
-import { rconHelper } from "../utils/rconHelper";
+import { rconHelper, RCON_TIMEOUT_MS } from "../utils/rconHelper";
 import { ActiveServer } from "../types/activeServeurType";
 import {
     ANTRE_BASE_URL,
+    buildServerChoices,
+    DEFAULT_EMBED_COLOR,
     fetchAllServeurs,
     findActiveServerForServeurId,
     findServeurById,
@@ -62,13 +64,9 @@ const STRINGS = {
         playersNoRconConfig: "Pas de configuration RCON pour ce serveur.",
         playersNotMinecraft: "Liste des joueurs non disponible pour ce jeu via RCON.",
     },
-    autocompleteLabel: (name: string, game: string) => `${name} (${game})`,
 } as const;
 
-const DEFAULT_EMBED_COLOR = 0x57F287;
-const AUTOCOMPLETE_LIMIT = 25;
 const MINECRAFT_GAME = "Minecraft";
-const RCON_TIMEOUT_MS = 5000;
 
 export default {
     data: new SlashCommandBuilder()
@@ -82,18 +80,8 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const focused = interaction.options.getFocused().toLowerCase();
         const servers = await fetchAllServeurs();
-
-        const choices = servers
-            .filter(s => s.name.toLowerCase().includes(focused))
-            .slice(0, AUTOCOMPLETE_LIMIT)
-            .map(s => ({
-                name: STRINGS.autocompleteLabel(s.name, getServerGame(s)),
-                value: s.id.toString(),
-            }));
-
-        await interaction.respond(choices);
+        await interaction.respond(buildServerChoices(servers, interaction.options.getFocused()));
     },
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {

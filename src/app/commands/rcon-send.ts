@@ -1,9 +1,7 @@
 import { AutocompleteInteraction, ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import { OtterPocketBase } from "../../otterbots/utils/pocketbase/pocketbase";
-import { ACTIVE_SERVERS_ALIAS } from "../utils/serverHelper";
-import { rconHelper } from "../utils/rconHelper";
+import { AUTOCOMPLETE_LIMIT, fetchAllActiveServers } from "../utils/serverHelper";
+import { rconHelper, RCON_TIMEOUT_MS } from "../utils/rconHelper";
 import { otterlogs } from "../../otterbots/utils/otterlogs";
-import { ActiveServer } from "../types/activeServeurType";
 
 export default {
     data: new SlashCommandBuilder()
@@ -23,16 +21,11 @@ export default {
 
     async autocomplete(interaction: AutocompleteInteraction) {
         const focused = interaction.options.getFocused().toLowerCase();
-        const servers = await OtterPocketBase.execByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-
-        if (!Array.isArray(servers)) {
-            await interaction.respond([]);
-            return;
-        }
+        const servers = await fetchAllActiveServers();
 
         const choices = servers
             .filter(s => s.host?.toLowerCase().includes(focused))
-            .slice(0, 25)
+            .slice(0, AUTOCOMPLETE_LIMIT)
             .map(s => ({ name: s.host || "Unknown", value: s.id }));
 
         await interaction.respond(choices);
@@ -50,8 +43,8 @@ export default {
             return;
         }
 
-        const servers = await OtterPocketBase.execByAlias<ActiveServer[]>(ACTIVE_SERVERS_ALIAS);
-        const target = servers?.find(s => s.id === serverId);
+        const servers = await fetchAllActiveServers();
+        const target = servers.find(s => s.id === serverId);
         if (!target) {
             otterlogs.error(`Server '${serverId}' not found.`);
             await interaction.editReply(`Serveur '${serverId}' introuvable.`);
@@ -65,7 +58,7 @@ export default {
         }
 
         const response = await rconHelper.sendCommand(
-            { host: target.rcon_host, port, password: target.rcon_password, timeout: 5000 },
+            { host: target.rcon_host, port, password: target.rcon_password, timeout: RCON_TIMEOUT_MS },
             command
         );
 
