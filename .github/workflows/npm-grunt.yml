@@ -17,6 +17,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Checkout Otterbots framework
+      uses: actions/checkout@v4
+      with:
+        repository: L-Antre-des-Loutres/Otterbots
+        ref: develop
+        path: .otterbots-tmp
+
+    - name: Vendor Otterbots into src/otterbots
+      run: |
+        mkdir -p src/otterbots
+        cp -R .otterbots-tmp/src/otterbots/. src/otterbots/
+        rm -rf .otterbots-tmp
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
