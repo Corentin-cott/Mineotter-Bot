@@ -1,5 +1,6 @@
 services:
   mineotter:
+    build: .
     image: mineotter:latest
     container_name: bot_discord-mineotter
     restart: unless-stopped
