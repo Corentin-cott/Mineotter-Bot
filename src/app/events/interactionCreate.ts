@@ -24,16 +24,16 @@ const STRINGS = {
     notModerator: "Cette action est réservée aux modérateurs.",
     invalidButton: "Bouton invalide ou expiré.",
     missingImage: "Impossible de retrouver l'image de cette soumission.",
-    saveFailed: "Échec de l'enregistrement de la capture. Réessaie plus tard.",
-    validated: "Capture validée et ajoutée à la galerie ✅",
-    refused: "Capture refusée ❌",
+    saveFailed: "Échec de l'enregistrement du screenshot. Réessaie plus tard.",
+    validated: "Screenshot validé et ajouté à la galerie ✅",
+    refused: "Screenshot refusé ❌",
     titleField: "Titre",
     statusField: "Statut",
     validatedBy: (id: string) => `${VALIDATED_EMOJI} Validée par <@${id}>`,
     refusedBy: (id: string) => `${REFUSED_EMOJI} Refusée par <@${id}>`,
     submissionValidated: `${VALIDATED_EMOJI} Validée`,
     submissionRefused: `${REFUSED_EMOJI} Refusée`,
-    defaultName: (author: string) => `Capture de ${author}`,
+    defaultName: (author: string) => `Screenshot de ${author}`,
 };
 
 async function handleValidate(

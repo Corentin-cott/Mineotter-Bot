@@ -30,12 +30,12 @@ import {
 const STRINGS = {
     command: {
         name: "screenshot",
-        description: "Proposer une capture d'écran de jeu pour le site antredesloutres.fr.",
+        description: "Proposer un screenshot de jeu pour le site antredesloutres.fr.",
     },
     options: {
-        serveur: { name: "serveur", description: "Le serveur sur lequel la capture a été prise" },
+        serveur: { name: "serveur", description: "Le serveur sur lequel le screenshot a été pris" },
         plateforme: { name: "plateforme", description: "La plateforme de jeu" },
-        image: { name: "image", description: "Ta capture d'écran (image)" },
+        image: { name: "image", description: "Ton screenshot (image)" },
         titre: { name: "titre", description: "Un titre ou une description (optionnel)" },
     },
     replies: {
@@ -44,15 +44,15 @@ const STRINGS = {
         serverNotFound: "Serveur introuvable.",
         platformNotFound: "Plateforme introuvable.",
         noModChannel: "Le salon de modération est introuvable. Contacte un administrateur.",
-        submitChannelUnavailable: "Impossible de publier la capture dans ce salon.",
-        success: "Ta capture a été soumise ! Elle sera ajoutée à la galerie sur la page du serveur une fois validée par un modérateur. ⏳",
+        submitChannelUnavailable: "Impossible de publier le screenshot dans ce salon.",
+        success: "Ton screenshot a été soumis ! Il sera ajouté à la galerie sur la page du serveur une fois validé par un modérateur. ⏳",
     },
     submission: {
-        title: (titre: string) => titre || "Capture d'écran",
+        title: (titre: string) => titre || "Screenshot",
         pendingFooter: `${PENDING_EMOJI} En attente de validation`,
     },
     moderation: {
-        title: "Lien vers la demande de capture d'écran à valider",
+        title: "Lien vers la demande de screenshot à valider",
         fieldPlayer: "Joueur",
         fieldTitle: "Titre",
         validateLabel: "Valider",
