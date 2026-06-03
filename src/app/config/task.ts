@@ -1,30 +1,5 @@
-// Examples of cron expressions:
-//
-// ┌──────────────────────────────────────────────────┐
-// │  minute  hour  day-of-month  month  day-of-week  │
-// └──────────────────────────────────────────────────┘
-//
-// Examples:
-//  - Every day at midnight:
-//      time = "0 0 * * *"
-//      period = ""
-//      expression = "0 0 * * *"
-//
-//  - Every Monday at 8 AM:
-//      time = "0 8 * *"
-//      period = "1"
-//      expression = "0 8 * * 1"
-//
-//  - Every weekday at 9 AM (Monday to Friday):
-//      time = "0 9 * *"
-//      period = "MON-FRI"
-//      expression = "0 9 * * MON-FRI"
-//
-//  - Every minute:
-//      time = "* * * * *"
-//      period = ""
-//      expression = "* * * * *"
-
+import { OtterPocketBase } from "../../otterbots/utils/pocketbase/pocketbase";
+import { otterlogs } from "../../otterbots/utils/otterlogs";
 
 /**
  * Represents a list of scheduled tasks with their respective configurations.
@@ -34,12 +9,29 @@
  * - `task`: An asynchronous function to be executed at the specified time.
  */
 export const tasks = [
-    {name: "hello world", time: "43 13 * * *", task: async () => test(), period: ""}
+    {
+        name: "pocketbase-auth-refresh",
+        time: "0 */6 * * *",
+        period: "",
+        task: async () => {
+            try {
+                const pb = await OtterPocketBase.getClient();
+                await pb.collection("_superusers").authRefresh();
+                otterlogs.debug("PocketBase: auth token refreshed.");
+            } catch {
+                otterlogs.warn("PocketBase: authRefresh failed, re-authenticating...");
+                try {
+                    const pb = await OtterPocketBase.getClient();
+                    await pb.collection("_superusers").authWithPassword(
+                        process.env.PB_EMAIL!,
+                        process.env.PB_PASSWORD!,
+                    );
+                    otterlogs.debug("PocketBase: re-authentication successful.");
+                } catch (err) {
+                    otterlogs.error(`PocketBase: re-authentication failed: ${err}`);
+                }
+            }
+        },
+    },
 ];
-
-
-// Function to be executed at the scheduled time you can change it
-function test() {}
-
-
 
