@@ -11,6 +11,7 @@ import { applyBotBranding } from "../utils/embedBranding";
 import {
     buildServerChoices,
     DEFAULT_EMBED_COLOR,
+    fetchAllActiveServers,
     fetchAllServeurs,
     findServeurById,
     getServerGame,
@@ -69,8 +70,9 @@ export default {
         ),
 
     async autocomplete(interaction: AutocompleteInteraction) {
-        const servers = await fetchAllServeurs();
-        const startable = servers.filter(isStartable);
+        const [servers, activeServers] = await Promise.all([fetchAllServeurs(), fetchAllActiveServers()]);
+        const activeIds = new Set(activeServers.map(a => a.server));
+        const startable = servers.filter(s => isStartable(s) && activeIds.has(s.id));
         await interaction.respond(buildServerChoices(startable, interaction.options.getFocused()));
     },
 
